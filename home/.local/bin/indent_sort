@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+
+class IndentSorter
+  class Node
+    attr_reader :content
+
+    def initialize(content, lines, level, indent)
+      @content = content
+      @lines = lines
+      @level = level
+      @indent = indent
+      @children = []
+    end
+
+    def self.create(content, lines, level, indent)
+      node = new(content, lines, level, indent)
+      node.process
+      node
+    end
+
+    def process
+      while @lines.any?
+        sub_content = @lines.first[:level] > @level ? nil : @lines.shift[:content]
+        @children << Node.create(sub_content, sub_children, next_level, @indent)
+      end
+
+      @children.sort_by! { |child| child.content || "" }
+    end
+
+    def print
+      puts "#{"\s" * @indent * (@level - 1)}#{@content}" if @content
+      @children.each(&:print)
+    end
+
+    private
+
+    def next_level
+      @level + 1
+    end
+
+    def sub_children
+      @lines.shift(@lines.index { |line| line[:level] == @level } || @lines.count)
+    end
+  end
+
+  def self.parse_lines(lines, indent)
+    lines.each_with_object([]) do |line, acc|
+      line.chomp!
+      next acc if line.match?(/^$/)
+      acc << line.match(/^(\s*)(.*)$/) { {level: $1.length / indent, content: $2} }
+    end
+  end
+end
+
+IndentSorter::Node
+  .create(
+    nil,
+    IndentSorter.parse_lines(ARGF.readlines, 2),
+    0,
+    2
+  ).print

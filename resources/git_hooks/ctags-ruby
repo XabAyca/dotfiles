@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# To be used inside git hooks: https://tbaggery.com/2011/08/08/effortless-ctags-with-git.html
+# Can be combined with hookup: https://github.com/tpope/hookup
+
+set -e
+trap 'rm -f "$$.tags"' EXIT
+
+git ls-files \
+  | sed -e '/.rb$/!d' -e '/^db/d' \
+  | ctags -f "$$.tags" -L -
+
+mv "$$.tags" ".tags"

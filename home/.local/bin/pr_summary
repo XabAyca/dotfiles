@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+
+require "json"
+
+def summary(pr_id)
+  res = `gh pr view #{pr_id} --json title,url,files,isDraft,body,headRefName`
+  data = JSON.parse(res)
+  files = data["files"]
+  has_migration = files.any? { |file| file["path"].match?(/^db\/migrate\//) }
+  body = data["body"]
+  jira_urls = body.scan(/\w+.atlassian.net\/browse\/[\w\-_]+/).map { |url| "https://#{url}" }
+  zendesk_urls = body.scan(/\w+.zendesk.com\/agent\/tickets\/\d+/).map { |url| "https://#{url}" }
+  origin_urls = jira_urls + zendesk_urls
+  github_urls = body.scan(/github.com\/\w+\/\w+\/pull\/\w+/).map { |url| "https://#{url}" }
+
+  summary = origin_urls.any? ? "#{origin_urls.join(" & ")} => " : ""
+  summary += "#{data["url"]}"
+  summary += " +migration" if has_migration
+  summary += " origin/#{data["headRefName"]}"
+  summary += " #{github_urls.join(" & ")}" if github_urls.any?
+
+  print summary
+end
+
+summary(ARGV[0])

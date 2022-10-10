@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+
+cmus-remote -C clear
+cmus-remote -C "add ~/Music/library"
+cmus-remote -C "update-cache -f"

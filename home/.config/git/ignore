@@ -1,0 +1,23 @@
+# Folder view configuration files
+.DS_Store
+Desktop.ini
+
+# Thumbnail cache files
+._*
+Thumbs.db
+
+# Files that might appear on external disks
+.Spotlight-V100
+.Trashes
+
+# Application specific files
+*.sw[nop]
+*.tags
+
+# ruby
+.irb_history
+irb_history
+.byebug_history
+
+# python
+.python-version

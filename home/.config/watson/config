@@ -1,0 +1,8 @@
+[options]
+  stop_on_start = true
+  stop_on_restart = false
+  date_format = %Y-%m-%d
+  time_format = at %H:%M:%S %Z
+  log_current = true
+  pager = true
+  report_current = true

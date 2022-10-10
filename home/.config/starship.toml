@@ -1,0 +1,8 @@
+add_newline = false
+
+format = """
+$username\
+$hostname\
+$directory\
+$git_branch\
+$character"""

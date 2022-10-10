@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+# Call this script this way: `m_report 2019-11 22`, with:
+#   - 2019-11 the month to be reported
+#   - 22      the number of working days
+
+require "date"
+
+VERBOSE = true
+TIME_REGEXP = /(\d+)h (\d+)m (\d+)s/
+RECORD_REGEXP = /^\t\w+\s+([0-9:]+) to ([0-9:]+)\s+(?:([0-9]+)h )?([0-9]+)m ([0-9]+)s.+$/
+
+def check_args
+  return false if ARGV.count != 2
+  return false if ARGV[0][/^\d{4}-\d{2}$/].nil?
+  return false if ARGV[1][/^\d+$/].nil?
+  return true
+end
+
+def get_period
+  year  = ARGV[0][/^\d+/].to_i
+  month = ARGV[0][/\d+$/].to_i
+  format = "%Y-%m-%d"
+
+  return {
+    start: Date.new(year, month,  1).strftime(format),
+    end:   Date.new(year, month, -1).strftime(format)
+  }
+end
+
+def to_time(seconds)
+  hours = seconds / 3600
+  minutes = (seconds - 3600 * hours) / 60
+  seconds -= 3600 * hours + 60 * minutes
+
+  return "#{hours}h #{minutes}m #{seconds}s"
+end
+
+def main_routine
+  if check_args
+    result = ""
+    watson_args = "-p mipise -f #{get_period[:start]} -t #{get_period[:end]}"
+
+    total = IO.popen("watson report #{watson_args}") do |io|
+      string = io.read[TIME_REGEXP]
+      3600 * string[TIME_REGEXP, 1].to_i + 60 * string[TIME_REGEXP, 2].to_i + string[TIME_REGEXP, 3].to_i
+    end
+
+    bonus = total - ARGV[1].to_i * 7 * 3600
+    resume = "Total de #{to_time(total)} sur la période, soit #{to_time(bonus)} supplémentaires"
+    result += "#{resume}\n\n"
+    log = IO.popen("watson log #{watson_args}") { |io| io.read }
+
+    if VERBOSE
+      result += log
+
+      result.gsub!(RECORD_REGEXP) do
+        if $3.nil?
+          "  #{$1}-#{$2} =>    #{$4}m #{$5}s"
+        else
+          "  #{$1}-#{$2} => #{$3}h #{$4}m #{$5}s"
+        end
+      end
+    else
+      result += log.lines.select{ |l| l !~ /^$/ && l !~ RECORD_REGEXP }.join()
+    end
+
+    IO.popen("pbcopy", "w") { |file| file.puts result }
+    puts "#{resume}\nReport sent to clipboard!"
+  else
+    puts "Error with arguments"
+  end
+end
+
+main_routine

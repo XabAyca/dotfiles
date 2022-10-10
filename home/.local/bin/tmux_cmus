@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+cmus_status() {
+  # cmus-remote returns EXIT_FAILURE/EXIT_SUCCESS depending on whether or not cmus is running.
+  if cmus-remote -Q > /dev/null 2>&1; then
+    local cmus_statuses=$(cmus-remote -Q)
+    local cmus_status=$(echo "$cmus_statuses" | grep "status" | cut -d ' ' -f 2)
+    local cmus_artist=$(echo "$cmus_statuses" | grep -m 1 "artist" | cut -d ' ' -f 3-)
+    local cmus_title=$(echo "$cmus_statuses" | grep "tag title" | cut -d ' ' -f 3-)
+
+    local cmus_combined="${cmus_artist:0:20} - ${cmus_title:0:30}"
+
+    if [ "$cmus_status" == "playing" ]; then
+      echo "[‣] ${cmus_combined}"
+    elif [ "$cmus_status" == "paused" ]; then
+      echo "[⏸] ${cmus_combined}"
+    else
+      echo "[⏹]"
+    fi
+  else
+    echo "[!]"
+  fi
+}
+
+cmus_status
