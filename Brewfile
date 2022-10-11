@@ -6,7 +6,6 @@ tap "puma/puma"
 
 # Brews
 brew "bat"
-brew "cmus"
 brew "coreutils"
 brew "curl"
 brew "diff-so-fancy"
