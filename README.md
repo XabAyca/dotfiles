@@ -5,13 +5,13 @@
 1. Clone this repository:
     ```shell
     cd
-    git clone https://github.com/guillaumeboudon/dotfiles.git .dotfiles
+    git clone https://github.com/XabAyca/dotfiles.git .dotfiles
     cd .dotfiles
     ```
 2. Install own dependencies:
     ```shell
-    mkdir -p ~/code/guillaumeboudon
-    git clone https://github.com/guillaumeboudon/base16-scripts.git ~/code/guillaumeboudon/base16-scripts
+    mkdir -p ~/code/XabAyca
+    git clone https://github.com/XabAyca/base16-scripts.git ~/code/XabAyca/base16-scripts
     ```
 3. Install Homebrew from https://brew.sh/
 4. Install applications: `brew bundle`
@@ -36,11 +36,3 @@
 - initial values
   - KeyRepeat : 2 (30ms)
   - InitialKeyRepeat : 15 (225ms)
-
-## Todo
-
-Implement ctags for rails apps:
-
-```shell
-ctags --tag-relative -Rf.tags --exclude=.git --exclude=tmp --exclude=public --exclude=log --exclude=elm-stuff --exclude=node_modules --languages=ruby .
-```
