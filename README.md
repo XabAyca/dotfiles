@@ -30,6 +30,7 @@
 - My config
   - defaults write -g KeyRepeat -int 1
   - defaults write -g InitialKeyRepeat -int 10
+  - defaults write com.apple.dock "autohide-time-modifier" -float "0.2" && killall Dock
 - Reset to default
   - defaults delete NSGlobalDomain KeyRepeat
   - defaults delete NSGlobalDomain InitialKeyRepeat
