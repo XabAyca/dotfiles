@@ -2,7 +2,7 @@ name: mipise
 root: ~/
 
 windows:
-  - mipise:
+  - Mipise:
       root: <%= ENV["CODE_ROOT"] %>/mipise/mipise
       layout: main-vertical
       panes:
@@ -10,15 +10,8 @@ windows:
         -
         -
 
-  - bs:
+  - BS:
       root: <%= ENV["CODE_ROOT"] %>/mipise/BS
 
-  - souscript_sdk:
-      root: <%= ENV["CODE_ROOT"] %>/mipise/souscript_sdk
-
-  - dotfiles:
+  - Dotfiles:
       root: <%= ENV["HOME"] %>/.dotfiles
-
-  - music:
-      panes:
-        - cmus
