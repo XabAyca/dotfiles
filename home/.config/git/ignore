@@ -21,3 +21,12 @@ irb_history
 
 # python
 .python-version
+
+# Application specific
+.env
+tmp
+log
+node_modules
+elm-stuff
+invoker.ini
+Gem_invoker.ini
