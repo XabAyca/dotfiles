@@ -273,15 +273,6 @@ alias g="git"
 alias ls="gls -v  --color=auto --group-directories-first --classify"
 alias ll="ls -l --human-readable"
 
-alias m="cmus"
-alias mn="cmus-remote -n"   # Next
-alias mp="cmus-remote -r"   # Previous
-alias mq="cmus-remote -C q" # Quit cmus
-alias ms="cmus-remote -s"   # Stop
-alias mst="cmus-remote -Q"   # Status
-alias mt="cmus-remote -u"   # Toggle play/pause
-alias mz="cmus-remote -S"   # Shuffle
-
 alias v="nvim"
 alias vimdiff="nvim -d"
 alias vi="$(brew --prefix)/bin/vim"
@@ -289,16 +280,12 @@ alias vi="$(brew --prefix)/bin/vim"
 alias tmux="tmux -f $XDG_CONFIG_HOME/tmux/tmux.conf"
 alias mux="tmuxinator"
 
-alias w="watson"
-
 alias bx="bundle exec"
 
 # Scripts
 # ------------------------------------------------------------------------------
 alias show='defaults write com.apple.finder AppleShowAllFiles -bool true && killall Finder'
 alias hide='defaults write com.apple.finder AppleShowAllFiles -bool false && killall Finder'
-alias weather='curl fr.wttr.in/Gallardon'
-alias wth="curl \"fr.wttr.in/Gallardon?format='%l:+%c+%t'\""
 alias my_ip="curl ipecho.net/plain; echo"
 
 my_mac() {
