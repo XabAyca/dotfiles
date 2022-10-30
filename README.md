@@ -8,22 +8,17 @@
     git clone https://github.com/XabAyca/dotfiles.git .dotfiles
     cd .dotfiles
     ```
-2. Install own dependencies:
-    ```shell
-    mkdir -p ~/code/XabAyca
-    git clone https://github.com/XabAyca/base16-scripts.git ~/code/XabAyca/base16-scripts
-    ```
-3. Install Homebrew from https://brew.sh/
-4. Install applications: `brew bundle`
-5. Set dotfiles: `stow --no-folding home`
-6. Install z: `mkdir -p ~/.local/share && touch ~/.local/share/z`
-7. Install ruby:
+2. Install Homebrew from https://brew.sh/
+3. Install applications: `brew bundle`
+4. Set dotfiles: `stow --no-folding home`
+5. Install z: `mkdir -p ~/.local/share && touch ~/.local/share/z`
+6. Install ruby:
     ```shell
     rbenv install -l
     rbenv install <version>
     rbenv global <version>
     ```
-8. Install global gems: `bundle install`
+7. Install global gems: `bundle install`
 
 ## Change key repeat on Mac OSX
 
