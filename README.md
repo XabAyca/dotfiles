@@ -5,25 +5,34 @@
 1. Clone this repository:
     ```shell
     cd
-    git clone https://github.com/guillaumeboudon/dotfiles.git .dotfiles
+    git clone https://github.com/XabAyca/dotfiles .dotfiles
     cd .dotfiles
     ```
-2. Install own dependencies:
-    ```shell
-    mkdir -p ~/code/guillaumeboudon
-    git clone https://github.com/guillaumeboudon/base16-scripts.git ~/code/guillaumeboudon/base16-scripts
-    ```
-3. Install Homebrew from https://brew.sh/
-4. Install applications: `brew bundle`
-5. Set dotfiles: `stow --no-folding home`
-6. Install z: `mkdir -p ~/.local/share && touch ~/.local/share/z`
-7. Install ruby:
+2. Install Homebrew from https://brew.sh/
+3. Install applications: `brew bundle`
+4. Set dotfiles: `stow --no-folding home`
+6. Install ruby:
     ```shell
     rbenv install -l
     rbenv install <version>
     rbenv global <version>
     ```
-8. Install global gems: `bundle install`
+    Install elixir
+    Instal Python
+7. Install VSCode extensions
+    ```shell
+    sh install-vscode-extensions.sh
+
+    pkglist=(
+    ms-vscode.cpptools
+    ms-python.python
+    vscodevim.vim
+    )
+
+    for i in ${pkglist[@]}; do
+      code --install-extension $i
+    done
+    ```
 
 ## Change key repeat on Mac OSX
 

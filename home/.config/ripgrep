@@ -1,9 +1,0 @@
-# Additional types
---type-add
-style:*.{css,sass,scss,less}
-
-# Ignore case until you put an uppercase
---smart-case
-
-# Follow symlinks
---follow

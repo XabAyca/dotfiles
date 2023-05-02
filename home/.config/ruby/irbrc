@@ -1,4 +1,0 @@
-IRB.conf[:SAVE_HISTORY] = 10_000
-
-history_path = defined?(::Rails) ? ENV["PWD"] : "#{ENV["XDG_CONFIG_HOME"]}/ruby/"
-IRB.conf[:HISTORY_FILE] = File.join(history_path, "irb_history")
