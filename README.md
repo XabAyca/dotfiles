@@ -18,7 +18,8 @@
     rbenv global <version>
     ```
     Install elixir
-    Instal Python
+    Install Python
+    Install Node
 7. Install VSCode extensions
     ```shell
     sh install-vscode-extensions.sh
