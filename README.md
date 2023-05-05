@@ -17,24 +17,24 @@
     rbenv install <version>
     rbenv global <version>
     ```
-    Install elixir
-    Install Python
+    Install Python:
+    ```shell
+    pyenv install <version>
+    pyenv global <version>
+    ```
     Install Node
+    ```shell
+    node install <version>
+    node global <version>
+    ```
 7. Install VSCode extensions
     ```shell
     sh install-vscode-extensions.sh
-
-    pkglist=(
-    ms-vscode.cpptools
-    ms-python.python
-    vscodevim.vim
-    )
-
-    for i in ${pkglist[@]}; do
-      code --install-extension $i
-    done
     ```
-
+    Get extensions list:
+    ```shell
+    code --list-extensions
+    ```
 ## Change key repeat on Mac OSX
 
 - My config
