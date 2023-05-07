@@ -1,0 +1,57 @@
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+[user]
+	name = Xabi
+	email = xabi.aycaguer@gmail.com
+[color]
+	branch = auto
+	diff = auto
+	interactive = auto
+	status = auto
+	ui = true
+[core]
+	editor = code -n -w
+	excludesfile = ~/.gitignore_global
+	pager = diff-so-fancy | emojify | less --tabs=4 -RFX
+[alias]
+	gha = gh pr edit --add-label
+	ghr = gh pr edit --remove-label
+	ghc = gh pr create -d -a "@me"
+	lg = log --graph --date=relative --pretty=tformat:'%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ad)%Creset'
+	s = status -s
+	br = branch
+	ci = commit
+	co = checkout
+	a = add
+	ap = !git a -N . && git a -p
+	ai = add -i
+	rebint = "!f() { git rebase --interactive HEAD~\"$1\"; }; f"
+	stashes = "stash list --pretty=format:'%C(cyan)%gd%Creset %s'"
+	fuckit = "!git clean -d -f && git reset --hard"
+	list-merged = "!git branch --merged | grep -E -v \"(^\\*|^ *(main|master|develop)$)\""
+	remove-merged = "!git list-merged | xargs git branch -d"
+	wip = "for-each-ref --sort='-authordate:iso8601' --format='%(color:green)%(authordate:relative)%09%(color:white)%(refname:short)' refs/heads"
+[merge]
+	conflictstyle = diff3
+[diff]
+	noprefix = true
+[color "diff-highlight"]
+	oldNormal = red bold
+	oldHighlight = red bold 52
+	newNormal = green bold
+	newHighlight = green bold 22
+[color "diff"]
+	meta = 11
+	frag = magenta bold
+	func = 146 bold
+	commit = yellow bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
+[add "interactive"]
+	useBuiltin = false
+[interactive]
+	diffFilter = diff-so-fancy --patch
