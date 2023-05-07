@@ -12,7 +12,6 @@
 3. Install OhMyZSH
     ```shell
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k
     ```
 4. Install applications: `brew bundle`
 5. Set dotfiles: `stow --no-folding home`
@@ -39,13 +38,7 @@
     ```shell
     code --list-extensions
     ```
-## Change key repeat on Mac OSX
-
-- My config
-  - defaults write -g KeyRepeat -int 1
-  - defaults write -g InitialKeyRepeat -int 10
-  - defaults write com.apple.dock autohide-delay -float 0
-  - defaults write com.apple.dock autohide-time-modifier -float 0.2
-  - killall Dock
-  - defaults write com.apple.finder AppleShowAllFiles -bool YES
-  - killall Finder
+8. Install MacOs Settings
+    ```shell
+    source install-macos-settings.sh
+    ```
