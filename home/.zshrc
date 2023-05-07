@@ -20,6 +20,7 @@ open() {
   fi
 }
 
+
 # Language (Execute `locale` to see the result)
 # ------------------------------------------------------------------------------
 export LC_ALL=             # Reset all locale variables
@@ -102,7 +103,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting rails ruby macos fzf)
 source $ZSH/oh-my-zsh.sh
-source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme
+source ~/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme
 
 # User configuration
 
