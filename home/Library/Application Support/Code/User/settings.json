@@ -1,0 +1,140 @@
+{
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.tabSize": 2,
+  "editor.wordWrap": "on",
+  "ruby.codeCompletion": "rcodetools",
+  "ruby.intellisense": "rubyLocate",
+  "files.associations": {
+    "*.rb": "ruby",
+    "*.js.erb": "javascript",
+    "*.heex": "phoenix-heex"
+  },
+  "editor.fontFamily": "Jetbrains mono",
+  "editor.fontLigatures": true,
+  "json.schemas": [],
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnType": true,
+  "editor.suggestSelection": "first",
+  "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+  "workbench.editorAssociations": {
+    "*.ipynb": "jupyter.notebook.ipynb",
+    "git-rebase-todo": "default",
+    "*.xlsx": "default"
+  },
+  "terminal.integrated.fontFamily": "MesloLGS NF",
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": ["comment"],
+        "settings": {
+          "fontStyle": "italic"
+        }
+      }
+    ]
+  },
+  "editor.linkedEditing": true,
+  "editor.cursorStyle": "block-outline",
+  "diffEditor.codeLens": true,
+  "editor.autoClosingBrackets": "always",
+  "[javascriptreact]": {
+    "editor.autoClosingBrackets": "always"
+  },
+  "[javascript]": {
+    "editor.autoClosingBrackets": "always",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.autoClosingBrackets": "always",
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[html]": {
+    "editor.autoClosingBrackets": "always",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[ruby]": {
+    "editor.autoClosingBrackets": "always"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "workbench.layoutControl.enabled": true,
+  "editor.inlineSuggest.enabled": true,
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": true,
+    "plaintext": true,
+    "markdown": true
+  },
+  "editor.minimap.enabled": false,
+  "editor.renderWhitespace": "all",
+  "terminal.integrated.cursorBlinking": true,
+  "workbench.startupEditor": "none",
+  "workbench.colorTheme": "Gruvbox Dark (Soft)",
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#8FBCBB",
+    "statusBar.noFolderBackground": "#8FBCBB",
+    "statusBar.debuggingBackground": "#8FBCBB",
+    "statusBar.foreground": "#434C5E",
+    "statusBar.debuggingForeground": "#434C5E",
+    "editor.selectionBackground": "#665c54",
+    "editor.selectionHighlightBackground": "#504945",
+    "tab.activeBorder": "#fe8019"
+  },
+  "workbench.editor.splitOnDragAndDrop": false,
+  "workbench.editor.untitled.hint": "hidden",
+  "workbench.activityBar.visible": false,
+  "activitusbar.inactiveColour": "#434C5E",
+  "activitusbar.views": [
+    {
+      "name": "explorer",
+      "codicon": "folder-opened"
+    },
+    {
+      "name": "search",
+      "codicon": "search-view-icon"
+    },
+    {
+      "name": "scm",
+      "codicon": "git-compare"
+    },
+    {
+      "name": "extensions",
+      "codicon": "extensions-view-icon"
+    },
+    {
+      "codicon": "flame"
+    }
+  ],
+  "activitusbar.showSourceControlCounter": true,
+  "css.enabledLanguages": ["html", "css", "heex", "erb"],
+  "terminal.external.osxExec": "Iterm2.app",
+  "terminal.integrated.copyOnSelection": true,
+  "terminal.integrated.tabs.hideCondition": "singleGroup",
+  "terminal.integrated.tabs.showActions": "never",
+  "terminal.integrated.tabs.showActiveTerminal": "never",
+  "workbench.iconTheme": "helium-icon-theme",
+  "helium-icon-theme.opacity": 0.7,
+  "helium-icon-theme.activeIconPack": "react_redux",
+  "helium-icon-theme.saturation": 1,
+  "terminal.integrated.persistentSessionScrollback": 1000,
+  "editor.guides.bracketPairs": true,
+  "workbench.editor.splitInGroupLayout": "vertical",
+  "terminal.integrated.scrollback": 5000,
+  "editor.stickyScroll.enabled": true,
+  "problems.decorations.enabled": false,
+  "explorer.compactFolders": false,
+  "workbench.editor.tabCloseButton": "off",
+  "workbench.editor.labelFormat": "medium",
+  "sync.gist": "9d5f0481329c7f0f8736118810ea8087",
+  "workbench.editor.enablePreview": false,
+  "notebook.cellFocusIndicator": "border",
+  "notebook.lineNumbers": "on",
+  "gitlens.statusBar.alignment": "left",
+  "gitlens.hovers.currentLine.over": "line",
+  "gitlens.views.commits.files.layout": "tree",
+  "gitlens.views.commits.showBranchComparison": false,
+  "gitlens.views.commits.pullRequests.showForBranches": false,
+  "gitlens.views.commits.pullRequests.enabled": false,
+  "gitlens.views.showRelativeDateMarkers": false,
+  "files.autoSave": "afterDelay"
+}
