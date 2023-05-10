@@ -13,6 +13,7 @@ brew "elixir"
 brew "flyctl"
 brew "fzf"
 brew "git"
+brew "gh"
 brew "heroku/brew/heroku"
 brew "imagemagick"
 brew "mailcatcher", restart_service: true
