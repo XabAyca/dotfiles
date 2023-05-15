@@ -1,5 +1,7 @@
 pkglist=(
   alexkrechik.cucumberautocomplete
+  bierner.markdown-emoji
+  bierner.markdown-checkbox
   dbaeumer.vscode-eslint
   dsznajder.es7-react-js-snippets
   eamodio.gitlens
