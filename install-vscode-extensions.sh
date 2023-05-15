@@ -22,7 +22,6 @@ pkglist=(
   Tyriar.sort-lines
   VisualStudioExptTeam.intellicode-api-usage-examples
   VisualStudioExptTeam.vscodeintellicode
-  frenco.vscode-notion
   wingrunr21.vscode-ruby
 )
 
