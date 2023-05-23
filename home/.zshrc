@@ -13,8 +13,12 @@ elif command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
   tmux attach -t Xabi_dev || tmux new -s Xabi_dev
 fi
 
+
+export FZF_DEFAULT_COMMAND='rg --files --hidden'
 open() {
-  file=$(fzf --preview 'bat --style=numbers --color=always --line-range :500 {}')
+  file=$(fzf --ansi \
+             --preview 'bat --style=numbers --color=always --line-range :500 {}' \
+  )
   if [ -n "$file" ];
   then
     code $file

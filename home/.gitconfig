@@ -23,6 +23,7 @@
 	lg = log --graph --date=relative --pretty=tformat:'%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ad)%Creset'
 	s = status -s
 	br = branch
+	b = "!git branch | fzf | xargs git co"
 	ci = commit
 	co = checkout
 	a = add
