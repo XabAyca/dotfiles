@@ -9,7 +9,6 @@ pkglist=(
   esbenp.prettier-vscode
   formulahendry.auto-rename-tag
   Gruntfuggly.activitusbar
-  helgardrichard.helium-icon-theme
   Hridoy.rails-snippets
   JakeBecker.elixir-ls
   karunamurti.haml
