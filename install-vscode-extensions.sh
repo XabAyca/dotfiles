@@ -24,6 +24,7 @@ pkglist=(
   VisualStudioExptTeam.intellicode-api-usage-examples
   VisualStudioExptTeam.vscodeintellicode
   wingrunr21.vscode-ruby
+  ryuta46.multi-command
 )
 
 for i in ${pkglist[@]}; do

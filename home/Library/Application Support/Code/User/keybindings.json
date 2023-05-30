@@ -95,5 +95,20 @@
     "key": "ctrl+k",
     "command": "workbench.action.editor.previousChange",
     "when": "editorTextFocus"
+  },
+  {
+    "key": "cmd+p",
+    "command": "extension.multiCommand.execute",
+    "args": {
+      "sequence": [
+        "workbench.action.terminal.focus",
+        {
+          "command": "workbench.action.terminal.sendSequence",
+          "args": {
+            "text": "open"
+          }
+        }
+      ]
+    }
   }
 ]
