@@ -15,13 +15,16 @@ elif command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
 fi
 
 export FZF_DEFAULT_OPTS='--color=16,bg:-1,bg+:15,hl:4,hl+:4,fg:-1,fg+:-1,gutter:-1,pointer:-1,marker:-1,prompt:1 --reverse --color border:214 --border=sharp --prompt="➤  " --pointer="➤ " --marker="➤ "'
+
 open() {
   rg --auto-hybrid-regex --hidden --files-with-matches "$1" |
   fzf --ansi --preview 'bat --style=numbers --color=always --line-range :500 {}' 2> /dev/tty |
   xargs code
 }
 
-
+rgg() {
+  rg -C2 --auto-hybrid-regex "$1" "$2"
+}
 
 # Language (Execute `locale` to see the result)
 # ------------------------------------------------------------------------------

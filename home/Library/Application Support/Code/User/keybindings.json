@@ -97,7 +97,7 @@
     "when": "editorTextFocus"
   },
   {
-    "key": "cmd+p",
+    "key": "cmd+m",
     "command": "extension.multiCommand.execute",
     "args": {
       "sequence": [
@@ -105,7 +105,7 @@
         {
           "command": "workbench.action.terminal.sendSequence",
           "args": {
-            "text": "open"
+            "text": "tmux resize-pane -Z && open"
           }
         }
       ]
