@@ -23,7 +23,20 @@ open() {
 }
 
 rgg() {
-  rg -C2 --auto-hybrid-regex "$1" "$2"
+  if [ "$2" != "" ]
+  then
+    rg -C2 --auto-hybrid-regex "$1" "$2"
+  else
+    rg -C2 --auto-hybrid-regex "$1"
+  fi
+}
+
+mps() {
+  tmux new-window -n MPS  -c ~/Documents/mps "rake server" \; split-window -c ~/Documents/mps
+}
+
+mipise() {
+  tmux new-window -n MIPISE  -c ~/Documents/mipise "invoker start invoker.ini" \; split-window -c ~/Documents/mipise
 }
 
 # Language (Execute `locale` to see the result)
@@ -106,7 +119,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting rails ruby macos fzf)
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting ruby macos fzf)
 source $ZSH/oh-my-zsh.sh
 source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme
 
@@ -149,4 +162,3 @@ alias ll2="exa --tree --level=2 --git --icons --ignore-glob='*DS_Store*' -l --no
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PATH="$PATH:/path/to/elixir/bin"
-export PATH="$HOME/.rbenv/bin:$PATH"
