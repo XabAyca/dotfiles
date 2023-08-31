@@ -25,6 +25,7 @@ pkglist=(
   VisualStudioExptTeam.vscodeintellicode
   wingrunr21.vscode-ruby
   ryuta46.multi-command
+  ms-vscode.live-server
 )
 
 for i in ${pkglist[@]}; do
