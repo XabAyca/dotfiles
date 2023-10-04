@@ -19,7 +19,6 @@
   "editor.suggestSelection": "first",
   "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
   "workbench.editorAssociations": {
-    "*.ipynb": "jupyter.notebook.ipynb",
     "git-rebase-todo": "default",
     "*.xlsx": "default"
   },
@@ -76,7 +75,6 @@
   },
   "workbench.editor.splitOnDragAndDrop": false,
   "workbench.editor.untitled.hint": "hidden",
-  "workbench.activityBar.visible": false,
   "activitusbar.inactiveColour": "#434C5E",
   "activitusbar.views": [
     {
@@ -116,8 +114,6 @@
   "explorer.fileNesting.enabled": true,
   "workbench.editor.tabCloseButton": "off",
   "workbench.editor.labelFormat": "medium",
-  "workbench.editor.enablePreview": false,
-  "notebook.cellFocusIndicator": "border",
   "notebook.lineNumbers": "on",
   "gitlens.statusBar.alignment": "left",
   "gitlens.hovers.currentLine.over": "line",
@@ -126,5 +122,14 @@
   "gitlens.views.commits.pullRequests.showForBranches": false,
   "gitlens.views.commits.pullRequests.enabled": false,
   "gitlens.views.showRelativeDateMarkers": false,
-  "files.autoSave": "afterDelay"
+  "files.autoSave": "afterDelay",
+  "livePreview.previewDebounceDelay": 10000000,
+  "merge-conflict.decorators.enabled": false,
+  "workbench.activityBar.visible": false,
+  "window.commandCenter": false,
+  "notebook.cellToolbarLocation": {
+    "default": "right",
+    "jupyter-notebook": "left"
+  },
+  "extensions.ignoreRecommendations": true
 }
