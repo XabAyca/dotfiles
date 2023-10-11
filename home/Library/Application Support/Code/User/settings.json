@@ -3,8 +3,6 @@
   "files.trimTrailingWhitespace": true,
   "editor.tabSize": 2,
   "editor.wordWrap": "on",
-  "ruby.codeCompletion": "rcodetools",
-  "ruby.intellisense": "rubyLocate",
   "files.associations": {
     "*.rb": "ruby",
     "*.js.erb": "javascript",
@@ -74,7 +72,6 @@
     "tab.activeBorder": "#fe8019"
   },
   "workbench.editor.splitOnDragAndDrop": false,
-  "workbench.editor.untitled.hint": "hidden",
   "activitusbar.inactiveColour": "#434C5E",
   "activitusbar.views": [
     {
@@ -131,5 +128,6 @@
     "default": "right",
     "jupyter-notebook": "left"
   },
-  "extensions.ignoreRecommendations": true
+  "extensions.ignoreRecommendations": true,
+  "workbench.editor.empty.hint": "hidden"
 }

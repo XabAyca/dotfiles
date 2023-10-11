@@ -18,14 +18,13 @@ pkglist=(
   ms-azuretools.vscode-docker
   MS-CEINTL.vscode-language-pack-fr
   phoenixframework.phoenix
-  rebornix.ruby
   tomphilbin.gruvbox-themes
   Tyriar.sort-lines
   VisualStudioExptTeam.intellicode-api-usage-examples
   VisualStudioExptTeam.vscodeintellicode
-  wingrunr21.vscode-ruby
   ryuta46.multi-command
   ms-vscode.live-server
+  shopify.ruby-lsp
 )
 
 for i in ${pkglist[@]}; do
