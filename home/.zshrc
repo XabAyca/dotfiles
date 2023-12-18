@@ -7,7 +7,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 # Open tmux by default
-
 if [[ "$TERM_PROGRAM" == "vscode" ]] && command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
   tmux attach -t VS_Code || tmux new -s VS_Code
 elif command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
@@ -121,7 +120,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting ruby macos fzf)
 source $ZSH/oh-my-zsh.sh
-source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme
+# source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme
 
 # User configuration
 

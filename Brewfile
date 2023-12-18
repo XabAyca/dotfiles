@@ -37,6 +37,7 @@ brew "zsh-history-substring-search"
 brew "zsh-syntax-highlighting"
 
 # Casks
+cask "bitwarden"
 cask "brave-browser"
 cask "discord"
 cask "garmin-express"
