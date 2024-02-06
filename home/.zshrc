@@ -144,6 +144,7 @@ source $ZSH/oh-my-zsh.sh
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 #
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 
 ZLE_RPROMPT_INDENT=0
 
