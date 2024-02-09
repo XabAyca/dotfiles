@@ -54,7 +54,7 @@
     "editor.autoClosingBrackets": "always"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "workbench.layoutControl.enabled": true,
+  "workbench.layoutControl.enabled": false,
   "editor.inlineSuggest.enabled": true,
   "editor.minimap.enabled": false,
   "editor.renderWhitespace": "all",
@@ -122,12 +122,14 @@
   "files.autoSave": "afterDelay",
   "livePreview.previewDebounceDelay": 10000000,
   "merge-conflict.decorators.enabled": false,
-  "workbench.activityBar.visible": false,
   "window.commandCenter": false,
   "notebook.cellToolbarLocation": {
     "default": "right",
     "jupyter-notebook": "left"
   },
   "extensions.ignoreRecommendations": true,
-  "workbench.editor.empty.hint": "hidden"
+  "workbench.editor.empty.hint": "hidden",
+  "terminal.integrated.defaultProfile.osx": "tmux",
+  "workbench.activityBar.location": "hidden",
+  "workbench.editor.tabActionCloseVisibility": false
 }
