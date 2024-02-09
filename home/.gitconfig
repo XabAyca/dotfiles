@@ -24,7 +24,7 @@
 	s = status -s
 	br = branch
 	b = "!git branch -l | fzf | xargs git co"
-	ci = commit
+	ci = gitmoji -i
 	co = checkout
 	a = add
 	ap = !git a -N . && git a -p
