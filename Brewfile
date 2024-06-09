@@ -19,13 +19,14 @@ brew "heroku/brew/heroku"
 brew "imagemagick"
 brew "mailcatcher", restart_service: true
 brew "nodenv"
+brew "lsd"
 brew "openssl"
 brew "postgresql", restart_service: true
 brew "puma/puma/puma-dev"
 brew "pyenv"
 brew "rbenv"
 brew "redis", restart_service: true
-brew "romkatv/powerlevel10k/powerlevel10k"
+brew "powerlevel10k"
 brew "stow"
 brew "tmux"
 brew "translate-shell"

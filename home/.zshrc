@@ -55,7 +55,6 @@ export ZSH="/Users/xabi/.oh-my-zsh"
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 # ZSH_THEME="robbyrussell"
-ZSH_THEME="powerlevel10k/powerlevel10k"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -117,10 +116,11 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting ruby macos fzf)
+source $(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+source $(brew --prefix)/share/powerlevel10k/powerlevel10k.zsh-theme
+plugins=(git ruby macos fzf)
 source $ZSH/oh-my-zsh.sh
-# source $(brew --prefix)/opt/powerlevel10k/powerlevel10k.zsh-theme
 
 # User configuration
 
@@ -155,8 +155,8 @@ eval "$(pyenv init -)"
 eval "$(nodenv init -)"
 eval "$(rbenv init -)"
 
-alias ll="exa --level=1 --git --icons --ignore-glob='*DS_Store*' -l --no-user --group-directories-first"
-alias ll2="exa --tree --level=2 --git --icons --ignore-glob='*DS_Store*' -l --no-user --group-directories-first"
+alias ll="lsd --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
+alias ll2="lsd --tree --depth 2 --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 export PYENV_ROOT="$HOME/.pyenv"

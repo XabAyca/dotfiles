@@ -14,8 +14,9 @@
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     ```
 4. Install applications: `brew bundle`
-5. Set dotfiles: `stow --no-folding home`
-6. Install ruby:
+5. Install Iterm2 config Settings > Settings > Import
+6. Set dotfiles: `stow --no-folding home`
+7. Install ruby:
     ```shell
     rbenv install <version>
     rbenv global <version>
@@ -30,7 +31,7 @@
     node install <version>
     node global <version>
     ```
-7. Install VSCode extensions
+8. Install VSCode extensions
     ```shell
     sh install-vscode-extensions.sh
     ```
@@ -38,7 +39,7 @@
     ```shell
     code --list-extensions
     ```
-8. Install MacOs Settings
+9. Install MacOs Settings
     ```shell
     source install-macos-settings.sh
     ```
