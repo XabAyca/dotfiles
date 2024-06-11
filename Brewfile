@@ -29,6 +29,7 @@ brew "redis", restart_service: true
 brew "powerlevel10k"
 brew "stow"
 brew "tmux"
+brew "ripgrep"
 brew "translate-shell"
 brew "tree"
 brew "vim"
