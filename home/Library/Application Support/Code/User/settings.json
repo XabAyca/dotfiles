@@ -129,7 +129,7 @@
   },
   "extensions.ignoreRecommendations": true,
   "workbench.editor.empty.hint": "hidden",
-  "terminal.integrated.defaultProfile.osx": "tmux",
+  "terminal.integrated.defaultProfile.osx": "bash",
   "workbench.activityBar.location": "hidden",
   "workbench.editor.tabActionCloseVisibility": false
 }

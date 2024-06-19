@@ -10,7 +10,7 @@ fi
 if [[ "$TERM_PROGRAM" == "vscode" ]] && command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
   tmux attach -t VS_Code || tmux new -s VS_Code
 elif command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
-  tmux attach -t Dev || tmux new -s Dev \; rename-window "TERMINAL"
+  tmux attach -t TERMINAL || tmux new -s TERMINAL
 fi
 
 export FZF_DEFAULT_OPTS='--color=16,bg:-1,bg+:15,hl:4,hl+:4,fg:-1,fg+:-1,gutter:-1,pointer:-1,marker:-1,prompt:1 --reverse --color border:214 --border=sharp --prompt="➤  " --pointer="➤ " --marker="➤ "'
