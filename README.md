@@ -16,7 +16,8 @@
 4. Install applications: `brew bundle`
 5. Install Iterm2 config Settings > Settings > Import
 6. Set dotfiles: `stow --no-folding home`
-7. Install ruby:
+7. Run: install tmux plugins TPM: `<leader> I`
+8. Install ruby:
     ```shell
     rbenv install <version>
     rbenv global <version>
@@ -31,7 +32,7 @@
     node install <version>
     node global <version>
     ```
-8. Install VSCode extensions
+9. Install VSCode extensions
     ```shell
     sh install-vscode-extensions.sh
     ```
@@ -39,7 +40,7 @@
     ```shell
     code --list-extensions
     ```
-9. Install MacOs Settings
+10. Install MacOs Settings
     ```shell
     source install-macos-settings.sh
     ```

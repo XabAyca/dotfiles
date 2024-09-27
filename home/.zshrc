@@ -6,21 +6,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Open tmux by default
-if [[ "$TERM_PROGRAM" == "vscode" ]] && command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
-  tmux attach -t VS_Code || tmux new -s VS_Code
-elif command -v tmux &> /dev/null && [ -z "$TMUX" ]; then
-  tmux attach -t TERMINAL || tmux new -s TERMINAL
-fi
-
-export FZF_DEFAULT_OPTS='--color=16,bg:-1,bg+:15,hl:4,hl+:4,fg:-1,fg+:-1,gutter:-1,pointer:-1,marker:-1,prompt:1 --reverse --color border:214 --border=sharp --prompt="➤  " --pointer="➤ " --marker="➤ "'
-
-open() {
-  rg --auto-hybrid-regex --hidden --files-with-matches "$1" |
-  fzf --ansi --preview 'bat --style=numbers --color=always --line-range :500 {}' 2> /dev/tty |
-  xargs code
-}
-
 rgg() {
   if [ "$2" != "" ]
   then
@@ -30,13 +15,6 @@ rgg() {
   fi
 }
 
-mps() {
-  tmux new-window -n MPS  -c ~/Documents/mps "rake server" \; split-window -c ~/Documents/mps
-}
-
-mipise() {
-  tmux new-window -n MIPISE  -c ~/Documents/mipise "invoker start invoker.ini" \; split-window -c ~/Documents/mipise
-}
 
 # Language (Execute `locale` to see the result)
 # ------------------------------------------------------------------------------
@@ -135,6 +113,7 @@ source $ZSH/oh-my-zsh.sh
 # else
 #   export EDITOR='mvim'
 # fi
+export EDITOR='nvim'
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -157,6 +136,8 @@ eval "$(rbenv init -)"
 
 alias ll="lsd --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
 alias ll2="lsd --tree --depth 2 --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
+alias tpro="tmuxinator start pro"
+alias t="tmux new-session -A -s"
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 export PYENV_ROOT="$HOME/.pyenv"

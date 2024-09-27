@@ -95,7 +95,6 @@
     }
   ],
   "activitusbar.showSourceControlCounter": true,
-  "css.enabledLanguages": ["html", "css", "heex", "erb"],
   "terminal.external.osxExec": "Iterm2.app",
   "terminal.integrated.copyOnSelection": true,
   "terminal.integrated.tabs.hideCondition": "singleGroup",
@@ -109,7 +108,6 @@
   "problems.decorations.enabled": false,
   "explorer.compactFolders": true,
   "explorer.fileNesting.enabled": true,
-  "workbench.editor.tabCloseButton": "off",
   "workbench.editor.labelFormat": "medium",
   "notebook.lineNumbers": "on",
   "gitlens.statusBar.alignment": "left",
@@ -120,7 +118,6 @@
   "gitlens.views.commits.pullRequests.enabled": false,
   "gitlens.views.showRelativeDateMarkers": false,
   "files.autoSave": "afterDelay",
-  "livePreview.previewDebounceDelay": 10000000,
   "merge-conflict.decorators.enabled": false,
   "window.commandCenter": false,
   "notebook.cellToolbarLocation": {
@@ -129,7 +126,7 @@
   },
   "extensions.ignoreRecommendations": true,
   "workbench.editor.empty.hint": "hidden",
-  "terminal.integrated.defaultProfile.osx": "bash",
+  "terminal.integrated.defaultProfile.osx": "zsh",
   "workbench.activityBar.location": "hidden",
   "workbench.editor.tabActionCloseVisibility": false
 }

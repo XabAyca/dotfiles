@@ -1,0 +1,39 @@
+name: Pro
+
+windows:
+  - mipise:
+      root: ~/documents/mipise
+      layout: main-vertical
+      panes:
+        - nvim
+        -
+        -
+
+  - mps:
+      root: ~/documents/mps
+      layout: main-vertical
+      panes:
+        - nvim
+        -
+        -
+
+  - mipise-tools:
+      root: ~/documents/mipise_tools
+      layout: main-vertical
+      panes:
+        - nvim
+        -
+        -
+
+  - dotfiles:
+      root: ~/.dotfiles
+      layout: main-vertical
+      panes:
+        - nvim
+        -
+        -
+
+  - Wiki:
+      root: ~/documents/my_wiki
+      panes:
+        - nvim note.md
