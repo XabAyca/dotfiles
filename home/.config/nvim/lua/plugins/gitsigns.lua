@@ -4,9 +4,9 @@ return {
   opts = {
 
     signs = {
-      add = { text = "▎" },
-      change = { text = "▎" },
-      changedelete = { text = "▎" },
+      add = { text = "+ " },
+      change = { text = "~ " },
+      changedelete = { text = "- " },
     },
     on_attach = function(bufnr)
       local gs = package.loaded.gitsigns

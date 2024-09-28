@@ -13,7 +13,7 @@
 	status = auto
 	ui = true
 [core]
-	editor = code -n -w
+	editor = nvim
 	excludesfile = ~/.gitignore_global
 	pager = diff-so-fancy | emojify | less --tabs=4 -RFX
 [alias]

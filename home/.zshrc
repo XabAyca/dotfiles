@@ -143,3 +143,4 @@ alias t="tmux new-session -A -s"
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 export PATH="$PATH:/path/to/elixir/bin"
+
