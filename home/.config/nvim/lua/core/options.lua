@@ -55,3 +55,6 @@ opt.fixeol = true -- Forcer la présence d'un caractère de fin de ligne sur la 
 -- Changer la couleur de fond de la colonne des signes
 vim.cmd([[highlight SignColumn guibg=NONE]])  -- Rendre la colonne des signes transparente
 
+-- Configurer la colonne des signes pour permettre jusqu'à 3 signes côte à côte
+opt.signcolumn = "auto:2"
+
