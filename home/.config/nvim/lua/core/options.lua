@@ -57,4 +57,3 @@ vim.cmd([[highlight SignColumn guibg=NONE]])  -- Rendre la colonne des signes tr
 
 -- Configurer la colonne des signes pour permettre jusqu'à 3 signes côte à côte
 opt.signcolumn = "auto:2"
-
