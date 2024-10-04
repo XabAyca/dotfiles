@@ -17,6 +17,7 @@ return {
       ensure_installed = {
         "bash",
         "dockerfile",
+        "elixir",
         "gitignore",
         "html",
         "javascript",
@@ -24,14 +25,14 @@ return {
         "lua",
         "markdown",
         "markdown_inline",
+        "markdown_inline",
         "python",
         "rst",
+        "ruby",
         "rust",
         "typescript",
         "vim",
         "yaml",
-        "ruby",
-        "elixir",
       },
       -- lorse de l'appui sur <Ctrl-space> sélectionne le bloc
       -- courant spécifique au langage de programmation
