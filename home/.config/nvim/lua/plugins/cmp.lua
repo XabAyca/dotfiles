@@ -3,6 +3,7 @@ return{
   dependencies = {
     "hrsh7th/cmp-buffer",  -- Source pour la complétion basée sur les buffers
     "hrsh7th/cmp-path",     -- Source pour la complétion des chemins de fichiers
+    "hrsh7th/cmp-cmdline"
   },
   config = function()
     -- Importer nvim-cmp
@@ -15,17 +16,35 @@ return{
       },
 
       -- Configuration des touches pour naviguer dans les suggestions
-      mapping = {
-        ['<C-n>'] = cmp.mapping(cmp.mapping.select_next_item(), { "i", "c" }),
-        ['<C-p>'] = cmp.mapping(cmp.mapping.select_prev_item(), { "i", "c" }),
-        ["<C-Space>"] = cmp.mapping.complete(),
-        ["<CR>"] = cmp.mapping.confirm({ select = true }), -- Confirmer la complétion avec Entrée
-      },
-
+      mapping = cmp.mapping.preset.insert({
+        ['<Tab>'] = cmp.mapping.complete(),
+        ['<C-n>'] = cmp.mapping.select_next_item(),
+        ['<C-p>'] = cmp.mapping.select_prev_item(),
+        ['<C-e>'] = cmp.mapping.abort(),
+        ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+      }),
       -- Désactiver la complétion automatique
       completion = {
         autocomplete = false  -- La complétion ne s'active pas automatiquement
       }
+    })
+
+    cmp.setup.cmdline({ '/', '?' }, {
+      mapping = cmp.mapping.preset.cmdline(),
+      sources = {
+        { name = 'buffer' }
+      }
+    })
+
+    -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+    cmp.setup.cmdline(':', {
+      mapping = cmp.mapping.preset.cmdline(),
+      sources = cmp.config.sources({
+        { name = 'path' }
+      }, {
+        { name = 'cmdline' }
+      }),
+      matching = { disallow_symbol_nonprefix_matching = false }
     })
   end
 }
