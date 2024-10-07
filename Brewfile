@@ -42,7 +42,6 @@ brew 'zsh-history-substring-search'
 brew 'zsh-syntax-highlighting'
 
 # Casks
-cask 'arc'
 cask 'discord'
 cask 'font-hack-nerd-font'
 cask 'garmin-express'
@@ -56,6 +55,7 @@ cask 'slack'
 cask 'stats'
 cask 'visual-studio-code'
 cask 'whatsapp'
+cask 'zen-browser'
 
 # Apps from App Store
 mas 'CopyClip', id: 595191960
