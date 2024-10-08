@@ -6,16 +6,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-rgg() {
-  if [ "$2" != "" ]
-  then
-    rg -C2 --auto-hybrid-regex "$1" "$2"
-  else
-    rg -C2 --auto-hybrid-regex "$1"
-  fi
-}
-
-
 # Language (Execute `locale` to see the result)
 # ------------------------------------------------------------------------------
 export LC_ALL=             # Reset all locale variables

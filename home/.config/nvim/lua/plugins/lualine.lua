@@ -5,11 +5,21 @@ return {
     local lualine = require("lualine")
     local lazy_status = require("lazy.status") -- affiche le nombre de mise à jour plugins lazy dans la barre
 
+    local function diff_source()
+      local gitsigns = vim.b.gitsigns_status_dict
+      if gitsigns then
+        return {
+          added = gitsigns.added,
+          modified = gitsigns.changed,
+          removed = gitsigns.removed
+        }
+      end
+    end
     -- configuration de lualine
     lualine.setup({
       options = {
         icons_enabled = true,
-        theme = "auto",
+        theme = "gruvbox_dark",
         component_separators = { left = "", right = "" },
         section_separators = { left = "", right = "" },
         disabled_filetypes = {
@@ -27,7 +37,7 @@ return {
       },
       sections = {
         lualine_a = { "mode" },
-        lualine_b = { "branch", "diff", "diagnostics" },
+        lualine_b = { "branch", {"diff", source = diff_source}, {"diagnostics", sources = {"ale"}}},
         lualine_c = { { "filename", path = 1 } },
         lualine_x = {
           {
