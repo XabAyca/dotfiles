@@ -42,6 +42,15 @@ return {
             },
           },
         },
+        extensions = {
+          file_browser = {
+            pickers = {
+              hidden = true,
+              no_ignore = true,
+              display_stat = false,
+            }
+          }
+        }
       },
     })
 
