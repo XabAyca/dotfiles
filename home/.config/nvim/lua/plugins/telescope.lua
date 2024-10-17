@@ -14,6 +14,7 @@ return {
     local telescopeConfig = require("telescope.config")
     local vimgrep_arguments = { unpack(telescopeConfig.values.vimgrep_arguments) }
     table.insert(vimgrep_arguments, "--hidden")
+    table.insert(vimgrep_arguments, "--no-ignore")
 
     local telescope = require("telescope")
     local actions = require("telescope.actions")
@@ -22,9 +23,8 @@ return {
     telescope.setup({
       defaults = {
         vimgrep_arguments = vimgrep_arguments,
-        file_ignore_patterns = { "vendor/", "node_modules", ".git/" },
+        file_ignore_patterns = { "vendor/", "node_modules", ".git/", "tmp/cache/" },
         hidden = true,
-        respect_gitignore = false,
 
         mappings = {
           i = {
@@ -35,19 +35,18 @@ return {
         pickers = {
           find_files = {
             hidden = true,
-            find_command = {
-              "rg",
-              "--files",
-              "--hidden",
-            },
+            no_ignore = true,
+            no_ignore_parent = true,
           },
         },
         extensions = {
           file_browser = {
             pickers = {
-              hidden = true,
+              grouped = true,
+              hidden = { file_browser = true, folder_browser = true },
               no_ignore = true,
               display_stat = false,
+              respect_gitignore = false,
             }
           }
         }
@@ -61,7 +60,7 @@ return {
     keymap.set(
       "n",
       "<leader>ff",
-      "<cmd>Telescope find_files hidden=true<cr>",
+      "<cmd>Telescope find_files hidden=true no_ignore=true<cr>",
       { desc = "Recherche de chaînes de caractères dans les noms de fichiers" }
     )
     keymap.set(
@@ -85,13 +84,7 @@ return {
     keymap.set(
       "n",
       "<leader>fw",
-      "<cmd>Telescope file_browser hidden=true<cr>",
-      { desc = "Recherche de fichier" }
-    )
-    keymap.set(
-      "n",
-      "<leader>fw",
-      "<cmd>Telescope file_browser path=%:p:h select_buffer=true<cr>",
+      "<cmd>Telescope file_browser display_stat=false grouped=true no_ignore=true hidden=true path=%:p:h select_buffer=true<cr>",
       { desc = "Recherche de fichier" }
     )
     keymap.set(
