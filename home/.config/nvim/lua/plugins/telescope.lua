@@ -23,7 +23,7 @@ return {
     telescope.setup({
       defaults = {
         vimgrep_arguments = vimgrep_arguments,
-        file_ignore_patterns = { "vendor/", "node_modules", ".git/", "tmp/cache/" },
+        file_ignore_patterns = { "vendor/", "node_modules", ".git/", "tmp/cache/", "public/", "log/" },
         hidden = true,
 
         mappings = {
