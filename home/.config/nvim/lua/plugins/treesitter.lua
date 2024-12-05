@@ -25,11 +25,9 @@ return {
         "lua",
         "markdown",
         "markdown_inline",
-        "markdown_inline",
         "python",
-        "rst",
         "ruby",
-        "rust",
+        "sql",
         "typescript",
         "vim",
         "yaml",
@@ -39,8 +37,8 @@ return {
       incremental_selection = {
         enable = true,
         keymaps = {
-          init_selection = "<C-space>",
-          node_incremental = "<C-space>",
+          init_selection = "<C-y>",
+          node_incremental = "<C-y>",
           scope_incremental = false,
           node_decremental = "<bs>",
         },

@@ -57,3 +57,11 @@ vim.cmd([[highlight SignColumn guibg=NONE]])  -- Rendre la colonne des signes tr
 
 -- Configurer la colonne des signes pour permettre jusqu'à 3 signes côte à côte
 opt.signcolumn = "auto:2"
+
+-- Ajoute un highlight rapide lors du yank
+vim.api.nvim_create_autocmd("TextYankPost", {
+  pattern = "*",
+  callback = function()
+    vim.highlight.on_yank({ higroup = "IncSearch", timeout = 200 })
+  end,
+})
