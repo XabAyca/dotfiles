@@ -8,6 +8,7 @@ return {
     treesitter.setup({
       -- activation de la coloration syntaxique
       highlight = {
+        additional_vim_regex_highlighting = false,
         enable = true,
       },
       -- activation de l'indentation améliorée
@@ -26,6 +27,7 @@ return {
         "markdown",
         "markdown_inline",
         "python",
+        "regex",
         "ruby",
         "sql",
         "typescript",
