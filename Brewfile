@@ -16,6 +16,7 @@ brew 'git'
 brew 'gh'
 brew 'heroku/brew/heroku'
 brew 'imagemagick'
+brew 'maccy'
 brew 'mailcatcher', restart_service: true
 brew 'neovim'
 brew 'nodenv'
@@ -48,12 +49,7 @@ cask 'google-drive'
 cask 'insomnia'
 cask 'iterm2'
 cask 'notion'
-cask 'notion-calendar'
 cask 'rectangle'
 cask 'slack'
 cask 'stats'
 cask 'whatsapp'
-cask 'zen-browser'
-
-# Apps from App Store
-mas 'CopyClip', id: 595191960
