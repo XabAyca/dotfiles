@@ -1,7 +1,5 @@
 # Taps
 tap 'heroku/brew'
-tap 'homebrew/cask-fonts'
-tap 'homebrew/cask-versions'
 tap 'puma/puma'
 
 # Brews

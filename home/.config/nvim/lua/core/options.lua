@@ -23,7 +23,7 @@ opt.cursorline = true -- surlignage de la ligne active
 -- termguicolors est nécessaire pour que les thèmes modernes fonctionnent
 opt.termguicolors = true
 opt.background = "dark" -- dark ou light en fonction de votre préférence
-opt.signcolumn = "yes" -- affiche une colonne en plus à gauche pour afficher les signes (évite de décaler le texte)
+opt.signcolumn = "auto:2" -- affiche jusqu'à 2 signes côte à côte dans la colonne de gauche
 
 -- retour
 opt.backspace = "indent,eol,start" -- on autorise l'utilisation de retour quand on indente, à la fin de ligne ou au début
@@ -55,8 +55,6 @@ opt.fixeol = true -- Forcer la présence d'un caractère de fin de ligne sur la 
 -- Changer la couleur de fond de la colonne des signes
 vim.cmd([[highlight SignColumn guibg=NONE]])  -- Rendre la colonne des signes transparente
 
--- Configurer la colonne des signes pour permettre jusqu'à 3 signes côte à côte
-opt.signcolumn = "auto:2"
 
 -- Ajoute un highlight rapide lors du yank
 vim.api.nvim_create_autocmd("TextYankPost", {

@@ -23,7 +23,7 @@
 	lg = log --graph --date=relative --pretty=tformat:'%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ad)%Creset'
 	lgo = log --oneline --date=relative --pretty=tformat:'%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ad)%Creset'
 	lgop = log --first-parent --oneline --date=relative --pretty=tformat:'%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%an %ad)%Creset'
-	his = "lg -n 20"
+	his = "!git lg -n 20"
 	s = status -s
 	br = branch
 	b = "!git branch -l | fzf | xargs git co"
@@ -38,6 +38,7 @@
 	list-merged = "!git branch --merged | grep -E -v \"(^\\*|^ *(main|master|develop)$)\""
 	remove-merged = "!git list-merged | xargs git branch -d"
 	wip = "for-each-ref --sort='-authordate:iso8601' --format='%(color:green)%(authordate:relative)%09%(color:white)%(refname:short)' refs/heads"
+	who = "!f() { \\\n  git blame --color-by-age --date=short -w -C -C -C \"$1\" | \\\n  fzf --ansi \\\n      --no-sort \\\n      --layout=reverse \\\n      --preview \"echo {} | grep -oE \\\"^[a-f0-9]+\\\" | xargs git show --color=always\" \\\n      --preview-window=right:50%:wrap \\\n      --bind \"enter:execute(echo {} | grep -oE \\\"^[a-f0-9]+\\\" | xargs git show --color=always | less -R)\"; \\\n}; f"
 [merge]
 	conflictstyle = diff3
 [diff]

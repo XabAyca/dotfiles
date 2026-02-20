@@ -19,9 +19,8 @@ return {
       lua = {"lua_language_server"},
       elixir = {"credo"},
       eruby = {"erblint"},
-      haml = {"hamlint"},
-      javascript = {"standard"},
       haml = {"haml-lint"},
+      javascript = {"standard"},
       python = {"pytype"}
     },
 
