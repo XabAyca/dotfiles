@@ -13,18 +13,18 @@ return {
   config = function()
     local telescopeConfig = require("telescope.config")
     local vimgrep_arguments = { unpack(telescopeConfig.values.vimgrep_arguments) }
+    -- Chercher dans les fichiers cachés mais respecter .gitignore
     table.insert(vimgrep_arguments, "--hidden")
-    table.insert(vimgrep_arguments, "--no-ignore")
+    table.insert(vimgrep_arguments, "--glob")
+    table.insert(vimgrep_arguments, "!.git/*")
 
     local telescope = require("telescope")
     local actions = require("telescope.actions")
-    local fb_actions = require "telescope".extensions.file_browser.actions
     require("telescope").load_extension("advanced_git_search")
     telescope.setup({
       defaults = {
         vimgrep_arguments = vimgrep_arguments,
-        file_ignore_patterns = { "vendor/", "node_modules", ".git/", "tmp/cache/", "public/", "log/" },
-        hidden = true,
+        file_ignore_patterns = { ".git/" },
 
         mappings = {
           i = {
@@ -32,24 +32,24 @@ return {
             ["<C-k>"] = actions.move_selection_previous,
           },
         },
-        pickers = {
-          find_files = {
-            hidden = true,
-            no_ignore = true,
-            no_ignore_parent = true,
-          },
+      },
+      pickers = {
+        find_files = {
+          -- fd est plus rapide que le finder par défaut
+          find_command = { "fd", "--type", "f", "--hidden", "--exclude", ".git" },
         },
-        extensions = {
-          file_browser = {
-            pickers = {
-              grouped = true,
-              hidden = { file_browser = true, folder_browser = true },
-              no_ignore = true,
-              display_stat = false,
-              respect_gitignore = false,
-            }
-          }
-        }
+        live_grep = {
+          -- Limite les résultats pour plus de réactivité
+          additional_args = { "--max-count=50" },
+        },
+      },
+      extensions = {
+        file_browser = {
+          grouped = true,
+          hidden = { file_browser = true, folder_browser = true },
+          display_stat = false,
+          respect_gitignore = true,
+        },
       },
     })
 

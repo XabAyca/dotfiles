@@ -21,7 +21,8 @@ return {
       eruby = {"erblint"},
       haml = {"haml-lint"},
       javascript = {"standard"},
-      python = {"pytype"}
+      python = {"pytype"},
+      rust = {"cargo"}
     },
 
     -- Configuration des couleurs pour les signes ALE
