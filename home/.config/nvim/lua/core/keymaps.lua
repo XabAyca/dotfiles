@@ -30,11 +30,11 @@ keymap("n", "<C-h>", "<C-w>h", { desc = "Déplace le curseur dans la fenêtre de
 keymap("n", "<C-j>", "<C-w>j", { desc = "Déplace le curseur dans la fenêtre du bas" })
 keymap("n", "<C-k>", "<C-w>k", { desc = "Déplace le curseur dans la fenêtre du haut" })
 
--- Redimensionnement des fenêtres avec Leader + hjkl (préfixer avec un nombre pour multiplier)
-keymap("n", "<leader>k", ":resize +2<CR>", { desc = "Agrandir la fenêtre verticalement" })
-keymap("n", "<leader>j", ":resize -2<CR>", { desc = "Réduire la fenêtre verticalement" })
-keymap("n", "<leader>l", ":vertical resize +2<CR>", { desc = "Agrandir la fenêtre horizontalement" })
-keymap("n", "<leader>h", ":vertical resize -2<CR>", { desc = "Réduire la fenêtre horizontalement" })
+-- Redimensionnement des fenêtres avec Ctrl + Shift + hjkl
+keymap("n", "<C-S-k>", ":resize +2<CR>", { desc = "Agrandir la fenêtre verticalement" })
+keymap("n", "<C-S-j>", ":resize -2<CR>", { desc = "Réduire la fenêtre verticalement" })
+keymap("n", "<C-S-l>", ":vertical resize +2<CR>", { desc = "Agrandir la fenêtre horizontalement" })
+keymap("n", "<C-S-h>", ":vertical resize -2<CR>", { desc = "Réduire la fenêtre horizontalement" })
 
 -- Navigation entre les buffers
 keymap("n", "<S-l>", ":bnext<CR>", { desc = "Buffer suivant" })
