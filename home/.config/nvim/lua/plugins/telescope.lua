@@ -9,6 +9,7 @@ return {
     "nvim-tree/nvim-web-devicons",
     "nvim-telescope/telescope-file-browser.nvim",
     "aaronhallaert/advanced-git-search.nvim",
+    "famiu/bufdelete.nvim",
   },
   config = function()
     local telescopeConfig = require("telescope.config")
@@ -20,7 +21,17 @@ return {
 
     local telescope = require("telescope")
     local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
     require("telescope").load_extension("advanced_git_search")
+
+    -- Ferme les buffers sélectionnés via bufdelete pour préserver les splits
+    local delete_buffer = function(prompt_bufnr)
+      local current_picker = action_state.get_current_picker(prompt_bufnr)
+      current_picker:delete_selection(function(selection)
+        require("bufdelete").bufdelete(selection.bufnr, true)
+      end)
+    end
+
     telescope.setup({
       defaults = {
         vimgrep_arguments = vimgrep_arguments,
@@ -41,6 +52,12 @@ return {
         live_grep = {
           -- Limite les résultats pour plus de réactivité
           additional_args = { "--max-count=50" },
+        },
+        buffers = {
+          mappings = {
+            i = { ["<C-d>"] = delete_buffer },
+            n = { ["<C-d>"] = delete_buffer, ["dd"] = delete_buffer },
+          },
         },
       },
       extensions = {
