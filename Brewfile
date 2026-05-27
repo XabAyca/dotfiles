@@ -32,11 +32,9 @@ brew 'tmux'
 brew 'ripgrep'
 brew 'translate-shell'
 brew 'tree'
-brew 'vim'
 brew 'yarn'
 brew 'zsh'
 brew 'zsh-autosuggestions'
-brew 'zsh-history-substring-search'
 brew 'zsh-syntax-highlighting'
 
 # Casks
