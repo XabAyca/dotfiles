@@ -24,17 +24,8 @@ keymap("x", "<C-i>", ":move '<-2<CR>gv-gv", { desc = "Déplace le texte sélecti
 -- K déplace le texte sélectionné vers le bas en mode visuel (activé avec V)
 keymap("x", "<C-k>", ":move '>+1<CR>gv-gv", { desc = "Déplace le texte sélectionné vers le bas en mode visuel bloc" })
 
--- Changement de fenêtre avec Ctrl + déplacement uniquement au lieu de Ctrl-w + déplacement
-keymap("n", "<C-l>", "<C-w>l", { desc = "Déplace le curseur dans la fenêtre droite" })
-keymap("n", "<C-h>", "<C-w>h", { desc = "Déplace le curseur dans la fenêtre de gauche" })
-keymap("n", "<C-j>", "<C-w>j", { desc = "Déplace le curseur dans la fenêtre du bas" })
-keymap("n", "<C-k>", "<C-w>k", { desc = "Déplace le curseur dans la fenêtre du haut" })
-
--- Redimensionnement des fenêtres avec Ctrl + Shift + hjkl
-keymap("n", "<C-S-k>", ":resize +2<CR>", { desc = "Agrandir la fenêtre verticalement" })
-keymap("n", "<C-S-j>", ":resize -2<CR>", { desc = "Réduire la fenêtre verticalement" })
-keymap("n", "<C-S-l>", ":vertical resize +2<CR>", { desc = "Agrandir la fenêtre horizontalement" })
-keymap("n", "<C-S-h>", ":vertical resize -2<CR>", { desc = "Réduire la fenêtre horizontalement" })
+-- Navigation (<C-hjkl>) et resize (<M-hjkl>) entre fenêtres nvim ET panes tmux
+-- (gérés par le plugin smart-splits.nvim, voir lua/plugins/smart-splits.lua)
 
 -- Navigation entre les buffers
 keymap("n", "<S-l>", ":bnext<CR>", { desc = "Buffer suivant" })

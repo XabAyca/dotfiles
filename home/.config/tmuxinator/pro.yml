@@ -3,23 +3,45 @@ name: Pro
 windows:
   - mipise:
       root: ~/documents/mipise
+      layout: main-horizontal
       panes:
-        - nvim -c "new | terminal"
+        - nvim
+        -
 
   - mps:
       root: ~/documents/mps
+      layout: main-horizontal
       panes:
-        - nvim -c "new | terminal"
+        - nvim
+        -
 
   - mipise-tools:
       root: ~/documents/mipise_tools
+      layout: main-horizontal
       panes:
-        - nvim -c "new | terminal"
+        - nvim
+        -
+
+  - assoway:
+      root: ~/documents/assoway
+      layout: main-horizontal
+      panes:
+        - nvim
+        -
+
+  - mps-mcp:
+      root: ~/documents/mps-mcp
+      layout: main-horizontal
+      panes:
+        - nvim
+        -
 
   - dotfiles:
       root: ~/.dotfiles
+      layout: main-horizontal
       panes:
-        - nvim -c "new | terminal"
+        - nvim
+        -
 
   - Wiki:
       root: ~/documents/my_wiki
