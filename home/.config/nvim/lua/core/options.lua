@@ -8,12 +8,10 @@ opt.number = true -- affiche le numéro absolu de la ligne active lorsque que re
 opt.tabstop = 2 -- 2 espaces pour les tabulations
 opt.shiftwidth = 2 -- 2 espaces pour la taille des indentations
 opt.expandtab = true -- change les tabulations en espaces (don't feed the troll please ;) )
-opt.autoindent = true -- on garde l'indentation actuelle à la prochaine ligne
 
 -- recherche
 opt.ignorecase = true -- ignore la casse quand on recherche
 opt.smartcase = true -- sauf quand on fait une recherche avec des majuscules, on rebascule en sensible à la casse
-opt.hlsearch = true -- surlignage de toutes les occurences de la recherche en cours
 
 -- ligne du curseur
 opt.cursorline = true -- surlignage de la ligne active
@@ -24,9 +22,6 @@ opt.cursorline = true -- surlignage de la ligne active
 opt.termguicolors = true
 opt.background = "dark" -- dark ou light en fonction de votre préférence
 opt.signcolumn = "auto:2" -- affiche jusqu'à 2 signes côte à côte dans la colonne de gauche
-
--- retour
-opt.backspace = "indent,eol,start" -- on autorise l'utilisation de retour quand on indente, à la fin de ligne ou au début
 
 -- presse papier
 opt.clipboard = "unnamedplus" -- on utilise le presse papier du système par défaut
@@ -57,10 +52,6 @@ opt.guifont = "MesloLGS NF Regular"
 -- Ajouter une dernière ligne à la fin des fichiers
 opt.eol = true -- Ajouter une nouvelle ligne à la fin des fichiers si elle n'existe pas
 opt.fixeol = true -- Forcer la présence d'un caractère de fin de ligne sur la dernière ligne
-
--- Changer la couleur de fond de la colonne des signes
-vim.cmd([[highlight SignColumn guibg=NONE]])  -- Rendre la colonne des signes transparente
-
 
 -- Ajoute un highlight rapide lors du yank
 vim.api.nvim_create_autocmd("TextYankPost", {
