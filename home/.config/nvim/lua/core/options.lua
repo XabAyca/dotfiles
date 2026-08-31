@@ -41,6 +41,10 @@ opt.undofile = true -- on autorise l'undo à l'infini (même quand on revient su
 
 opt.iskeyword:append("-") -- on traite les mots avec des - comme un seul mot
 
+-- netrw : ne pas prendre l'explorateur comme "alternate file" pour que Ctrl-^
+-- ramène bien vers le fichier précédent après ouverture depuis :Ex
+vim.g.netrw_altfile = 1
+
 -- affichage des caractères spéciaux
 opt.list = true
 opt.listchars:append({ space = "•", nbsp = "␣", trail = "•", precedes = "«", extends = "»", tab = "> " })

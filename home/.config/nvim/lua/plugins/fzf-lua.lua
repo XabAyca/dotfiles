@@ -60,10 +60,6 @@ return {
       desc = "Recherche du mot sous le curseur",
     })
 
-    keymap.set("n", "<leader>fw", function()
-      fzf.files({ cwd = vim.fn.expand("%:p:h"), no_ignore = true })
-    end, { desc = "Recherche de fichier dans le dossier du buffer courant" })
-
     keymap.set("n", "<leader>fi", fzf.git_bcommits, {
       desc = "Historique git du buffer courant",
     })
