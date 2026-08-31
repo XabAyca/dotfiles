@@ -14,15 +14,9 @@ keymap("t", ";;", [[<C-\><C-n>]], { desc = "Sortir du mode terminal avec ;;" })
 -- on efface le surlignage de la recherche
 keymap("n", "<leader>nh", ":nohl<CR>", { desc = "Effacer le surlignage de la recherche" })
 
--- I déplace le texte sélectionné vers le haut en mode visuel (activé avec v)
-keymap("v", "<C-i>", ":m .-2<CR>==", { desc = "Déplace le texte sélectionné vers le haut en mode visuel" })
--- K déplace le texte sélectionné vers le bas en mode visuel (activé avec v)
-keymap("v", "<C-k>", ":m .+1<CR>==", { desc = "Déplace le texte sélectionné vers le bas en mode visuel" })
-
--- I déplace le texte sélectionné vers le haut en mode visuel bloc (activé avec V)
-keymap("x", "<C-i>", ":move '<-2<CR>gv-gv", { desc = "Déplace le texte sélectionné vers le haut en mode visuel bloc" })
--- K déplace le texte sélectionné vers le bas en mode visuel (activé avec V)
-keymap("x", "<C-k>", ":move '>+1<CR>gv-gv", { desc = "Déplace le texte sélectionné vers le bas en mode visuel bloc" })
+-- J/K déplacent la sélection vers le bas/haut en visuel (cohérent avec hjkl)
+keymap("x", "J", ":move '>+1<CR>gv=gv", { desc = "Déplace la sélection vers le bas" })
+keymap("x", "K", ":move '<-2<CR>gv=gv", { desc = "Déplace la sélection vers le haut" })
 
 -- Navigation (<C-hjkl>) et resize (<M-hjkl>) entre fenêtres nvim ET panes tmux
 -- (gérés par le plugin smart-splits.nvim, voir lua/plugins/smart-splits.lua)
