@@ -37,6 +37,8 @@ opt.splitbelow = true -- le split horizontal d'une fenêtre s'affiche en bas
 
 opt.swapfile = false -- on supprime le pénible fichier de swap
 
+opt.confirm = true -- au lieu d'un E37 bloquant, propose de sauver quand on quitte un buffer modifié
+
 opt.undofile = true -- on autorise l'undo à l'infini (même quand on revient sur un fichier qu'on avait fermé)
 
 opt.iskeyword:append("-") -- on traite les mots avec des - comme un seul mot
