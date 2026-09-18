@@ -15,7 +15,7 @@
 [core]
 	editor = nvim
 	excludesfile = ~/.gitignore_global
-	pager = diff-so-fancy | emojify | less --tabs=4 -RFX
+	pager = delta
 [alias]
 	gha = gh pr edit --add-label
 	ghr = gh pr edit --remove-label
@@ -43,11 +43,6 @@
 	conflictstyle = diff3
 [diff]
 	noprefix = true
-[color "diff-highlight"]
-	oldNormal = red bold
-	oldHighlight = red bold 52
-	newNormal = green bold
-	newHighlight = green bold 22
 [color "diff"]
 	meta = 11
 	frag = magenta bold
@@ -56,7 +51,8 @@
 	old = red bold
 	new = green bold
 	whitespace = red reverse
-[add "interactive"]
-	useBuiltin = false
 [interactive]
-	diffFilter = diff-so-fancy --patch
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	line-numbers = true

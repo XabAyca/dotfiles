@@ -13,7 +13,7 @@ export LC_MESSAGES="POSIX" # Set POSIX for commands messages
 
 export ZSH="$HOME/.oh-my-zsh"
 
-source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme
+source ~/.local/share/p10k/powerlevel10k.zsh-theme
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 plugins=(git ruby fzf-tab)
 source $ZSH/oh-my-zsh.sh
@@ -43,6 +43,10 @@ rbenv()  { _lazy_rbenv  "$@" }
 pyenv()  { _lazy_pyenv  "$@" }
 nodenv() { _lazy_nodenv "$@" }
 
+# mise : gestionnaire de runtimes du serveur. Indispensable, les binaires installes
+# par mise (node, claude, ...) ne sont pas dans le PATH sans cette activation.
+eval "$(mise activate zsh)"
+
 # FZF : intégration officielle (keybindings Ctrl-T/Ctrl-R/Alt-C + completion)
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
@@ -53,6 +57,5 @@ eval "$(fzf --zsh)"
 
 alias ll="lsd --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
 alias ll2="lsd --tree --depth 2 --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
-alias tpro="tmuxinator start pro"
 alias t="tmux new-session -A -s"
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
