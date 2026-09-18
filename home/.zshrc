@@ -58,3 +58,4 @@ alias ll2="lsd --tree --depth 2 --git --ignore-glob='*DS_Store*' -l --group-dire
 alias tpro="tmuxinator start pro"
 alias t="tmux new-session -A -s"
 . "$HOME/.cargo/env"
+export PATH="$HOME/bin:$PATH"

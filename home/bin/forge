@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+HOST="forge"
+
+liste=$(ssh -o BatchMode=yes "$HOST" '
+  tmux ls -F "#{session_name}" 2>/dev/null > /tmp/.s || : > /tmp/.s
+  cat /tmp/.s
+  for d in ~/projects/*/; do
+    p=$(basename "$d")
+    grep -qx "$p" /tmp/.s || echo "$p [nouveau]"
+  done
+')
+
+s=$(printf "%s\n" "$liste" | fzf --prompt='< Sessions Forge > ' --height=40% --reverse)
+[ -z "${s:-}" ] && exit 0
+s=${s% \[nouveau\]}
+
+exec ssh -t "$HOST" "tmux new-session -A -s '$s' -c ~/projects/'$s'/main"
+EOF
