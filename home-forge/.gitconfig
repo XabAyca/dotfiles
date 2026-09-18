@@ -15,7 +15,7 @@
 [core]
 	editor = nvim
 	excludesfile = ~/.gitignore_global
-	pager = delta
+	pager = emojify | delta
 [alias]
 	gha = gh pr edit --add-label
 	ghr = gh pr edit --remove-label

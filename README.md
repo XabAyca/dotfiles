@@ -71,6 +71,16 @@ Step 4 is the only one performed on the client machine, not the server.
     ln -sf "$(command -v batcat)" ~/.local/bin/bat
     ```
 
+   `emojify` has no package either — it is a single bash script. `.gitconfig` pipes
+   git's output through it before delta, so the `:memo:` of a commit message shows
+   up as an emoji:
+
+    ```shell
+    curl -fsSL -o ~/.local/bin/emojify \
+      https://raw.githubusercontent.com/mrowa44/emojify/master/emojify
+    chmod +x ~/.local/bin/emojify
+    ```
+
 3. Oh My Zsh, Powerlevel10k and fzf-tab. Powerlevel10k has no Debian/Ubuntu package;
    the git clone is the official route on Linux. fzf-tab is not optional either —
    `.zshrc` lists it in `plugins=()`, and its absence warns on every shell start.
@@ -105,8 +115,9 @@ Step 4 is the only one performed on the client machine, not the server.
 7. Test before switching shells. Keep **two** SSH sessions open and, in one of them,
    run `zsh -l` — a child process you leave with `exit`, never `source ~/.zshrc`,
    which asks bash to read zsh. Check the p10k prompt and its glyphs, `node -v` and
-   `which claude` (the mise test), `git diff` rendered by delta, `Ctrl-T` / `Ctrl-R` /
-   `Alt-C`, `cd <Tab>`, `ll`, `nvim`, and `C-hjkl` across tmux panes and nvim splits.
+   `which claude` (the mise test), `git diff` rendered by delta, `git log` with its
+   gitmoji, `Ctrl-T` / `Ctrl-R` / `Alt-C`, `cd <Tab>`, `ll`, `nvim`, and `C-hjkl`
+   across tmux panes and nvim splits.
 
 8. Only once that is reliable, several sessions in a row:
 
