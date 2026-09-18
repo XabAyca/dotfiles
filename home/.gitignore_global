@@ -20,3 +20,5 @@ Gem_invoker.ini
 Procfile.dev
 
 CLAUDE.md
+
+**/.claude/settings.local.json
