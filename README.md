@@ -110,6 +110,14 @@ Step 4 is the only one performed on the client machine, not the server.
 
     Add `-t ~` when the repository lives anywhere other than directly under `$HOME`.
 
+    `~/.claude/CLAUDE.md` ships with the package: the baseline rules every agent reads,
+    in every project. Claude Code picks it up on its own; other agents look for
+    `AGENTS.md`, so point one at it:
+
+    ```shell
+    ln -sfn .claude/CLAUDE.md ~/AGENTS.md
+    ```
+
 6. Tmux plugins: launch `tmux`, then `Ctrl-A + I`. TPM clones itself on first launch.
 
 7. Test before switching shells. Keep **two** SSH sessions open and, in one of them,
