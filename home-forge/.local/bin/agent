@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# Runs a Spec Kit feature workflow on its own worktree, in a detached tmux
+# session so `forge` can attach to it from the laptop.
+set -euo pipefail
+
+AGENTS=$HOME/agents/feature
+PROJECTS=$HOME/projects
+
+usage() {
+  cat >&2 <<'USAGE'
+usage:
+  agent start <project> "<feature description>"
+  agent answer <project>/<branch> <run_id> <input>=<value>
+  agent list
+  agent done <project>/<branch>
+USAGE
+  exit 1
+}
+
+start() {
+  local project=${1:?missing project} description=${2:?missing description}
+  local main="$PROJECTS/$project/main"
+  [ -d "$main/.specify" ] || { echo "$project is not a Spec Kit project" >&2; exit 1; }
+
+  # Spec Kit numbers features from the specs/ of the current checkout, which
+  # does not know about features still living on unmerged branches. Count the
+  # branches too, or two features started in parallel both claim the same
+  # number. Projects numbering by timestamp do not have the problem.
+  local numbering number_arg=()
+  numbering=$(jq -r '.feature_numbering // "sequential"' "$main/.specify/init-options.json")
+  if [ "$numbering" = timestamp ]; then
+    number_arg=(--timestamp)
+  elif [ "$numbering" = sequential ]; then
+    local highest next
+    highest=$( { ls "$main/specs" 2>/dev/null
+                 git -C "$main" branch -a --format='%(refname:short)'; } \
+               | grep -oE '^[0-9]{3}' | sort -n | tail -1)
+    next=$(( 10#${highest:-0} + 1 ))
+    number_arg=(--number "$next")
+  fi
+
+  # Ask Spec Kit for the branch name it will pick, so the worktree, the branch
+  # and the spec directory all agree.
+  local branch
+  branch=$(cd "$main" && bash .specify/scripts/bash/create-new-feature.sh \
+    --dry-run --json "${number_arg[@]}" "$description" | jq -re '.BRANCH_NAME')
+
+  local tree="$PROJECTS/$project/$branch"
+  [ -e "$tree" ] && { echo "$tree already exists" >&2; exit 1; }
+
+  git -C "$main" fetch --quiet origin
+  git -C "$main" worktree add "$tree" -b "$branch"
+
+  # The installed workflow is not committed, so each worktree gets its own copy.
+  (cd "$tree" && specify workflow add --dev "$AGENTS" >/dev/null)
+
+  tmux new-session -d -s "$project/$branch" -c "$tree" \
+    "SPECKIT_INTEGRATION_CLAUDE_EXTRA_ARGS='--permission-mode acceptEdits' \
+     specify workflow run feature -i spec=$(printf %q "$description") --json < /dev/null; \
+     exec $SHELL"
+
+  echo "worktree  $tree"
+  echo "branch    $branch"
+  echo "session   $project/$branch   (forge, or tmux attach -t '$project/$branch')"
+}
+
+answer() {
+  local target=${1:?missing project/branch} run_id=${2:?missing run_id}
+  shift 2
+  [ $# -gt 0 ] || usage
+  local tree="$PROJECTS/${target%%/*}/${target#*/}"
+  cd "$tree"
+  local args=()
+  for kv in "$@"; do args+=(--input "$kv"); done
+  specify workflow resume "$run_id" "${args[@]}" --json < /dev/null
+}
+
+list() {
+  local tree
+  for tree in "$PROJECTS"/*/*/; do
+    [ -d "$tree/.specify/workflows/runs" ] || continue
+    local f
+    for f in "$tree"/.specify/workflows/runs/*/state.json; do
+      [ -f "$f" ] || continue
+      jq -r --arg t "$(basename "$(dirname "$tree")")/$(basename "$tree")" \
+        '"\($t)  \(.run_id)  \(.workflow_id)  \(.status)  \(.current_step_id // "-")"' "$f"
+    done
+  done
+}
+
+done_() {
+  local target=${1:?missing project/branch}
+  local tree="$PROJECTS/${target%%/*}/${target#*/}"
+  # Refuse to drop work that was never committed.
+  [ -z "$(git -C "$tree" status --porcelain)" ] || {
+    echo "$tree has uncommitted changes" >&2; exit 1; }
+  git -C "$PROJECTS/${target%%/*}/main" worktree remove "$tree"
+  echo "removed $tree"
+}
+
+case ${1:-} in
+  start)  shift; start "$@" ;;
+  answer) shift; answer "$@" ;;
+  list)   shift; list ;;
+  done)   shift; done_ "$@" ;;
+  *)      usage ;;
+esac
