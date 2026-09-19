@@ -18,9 +18,7 @@
       "Bash(cargo check:*)",
       "Bash(cargo clippy:*)",
       "Bash(cargo fmt:*)",
-      "Bash(cargo audit:*)",
-      "Bash(bundle exec rspec:*)",
-      "Bash(bundle exec rubocop:*)"
+      "Bash(cargo audit:*)"
     ],
     "deny": [
       "Bash(git push:*)",
