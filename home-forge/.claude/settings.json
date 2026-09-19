@@ -1,0 +1,32 @@
+{
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    }
+  },
+  "theme": "dark-ansi",
+  "enabledPlugins": {
+    "ponytail@ponytail": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(cargo test:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(cargo fmt:*)",
+      "Bash(cargo audit:*)",
+      "Bash(bundle exec rspec:*)",
+      "Bash(bundle exec rubocop:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(sudo:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}
