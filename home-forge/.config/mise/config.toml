@@ -1,0 +1,4 @@
+[tools]
+gh = "latest"
+node = "22"
+uv = "latest"
