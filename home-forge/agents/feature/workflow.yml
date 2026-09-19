@@ -2,9 +2,9 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.2.0"
+  version: "0.3.0"
   author: "xabi"
-  description: "specify → plan → tasks → implement → review ⟲ fix → draft PR"
+  description: "specify → plan → design → implement → review ⟲ fix → draft PR"
 
 requires:
   speckit_version: ">=1.0.4"
@@ -75,6 +75,12 @@ steps:
     input:
       args: "{{ inputs.spec }}"
 
+  - id: design-ui
+    type: prompt
+    integration: "{{ inputs.integration }}"
+    timeout: 1800
+    prompt: "/design-ui {{ context.run_id }}"
+
   - id: tasks
     command: speckit.tasks
     integration: "{{ inputs.integration }}"
@@ -97,6 +103,12 @@ steps:
         timeout: 1800
         prompt: "/review-feature {{ context.run_id }}"
 
+      - id: review-ui
+        type: prompt
+        integration: "{{ inputs.integration }}"
+        timeout: 1800
+        prompt: "/review-ui {{ context.run_id }}"
+
       - id: verdict
         type: shell
         run: 'bash $HOME/agents/feature/scripts/verdict.sh {{ context.run_id }} {{ inputs.max_fix }}'
@@ -109,7 +121,7 @@ steps:
             type: prompt
             integration: "{{ inputs.integration }}"
             timeout: 1800
-            prompt: "Fix only the problems listed in .specify/state/{{ context.run_id }}/review.json. Do not change the spec or the plan. Re-run the tests afterwards."
+            prompt: "Fix only the problems listed in .specify/state/{{ context.run_id }}/review.json and, if it exists, ui.json. Do not change the spec or the plan. Re-run the tests afterwards."
 
   - id: escalate
     type: if
