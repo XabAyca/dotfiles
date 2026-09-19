@@ -56,3 +56,9 @@
 [delta]
 	navigate = true
 	line-numbers = true
+[credential "https://github.com"]
+	helper = 
+	helper = !/home/dev/.local/share/mise/shims/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/home/dev/.local/share/mise/shims/gh auth git-credential
