@@ -9,7 +9,7 @@ PROJECTS=$HOME/projects
 usage() {
   cat >&2 <<'USAGE'
 usage:
-  agent start <project> "<feature description>"
+  agent start <project> "<feature description>" [short-name]
   agent answer <project>/<branch> <run_id> <input>=<value>
   agent list
   agent done <project>/<branch>
@@ -19,6 +19,10 @@ USAGE
 
 start() {
   local project=${1:?missing project} description=${2:?missing description}
+  # The branch name is derived from the description before any agent sees it,
+  # so a description in another language leaks into the branch. Pass a short
+  # English name to decide it.
+  local short=${3:-}
   local main="$PROJECTS/$project/main"
   [ -d "$main/.specify" ] || { echo "$project is not a Spec Kit project" >&2; exit 1; }
 
@@ -38,6 +42,7 @@ start() {
     next=$(( 10#${highest:-0} + 1 ))
     number_arg=(--number "$next")
   fi
+  [ -n "$short" ] && number_arg+=(--short-name "$short")
 
   # Ask Spec Kit for the branch name it will pick, so the worktree, the branch
   # and the spec directory all agree.
@@ -53,6 +58,20 @@ start() {
 
   # The installed workflow is not committed, so each worktree gets its own copy.
   (cd "$tree" && specify workflow add --dev "$AGENTS" >/dev/null)
+
+  # Agent config lives in the project but may not be committed yet; a fresh
+  # worktree would otherwise miss it.
+  local f
+  for f in "$main"/.specify/agents-*; do
+    [ -e "$f" ] && cp "$f" "$tree/.specify/"
+  done
+
+  # A fresh worktree lacks everything the project gitignores. Projects that
+  # need more than a checkout to build say so in this script; most need none.
+  if [ -x "$tree/.specify/agents-bootstrap.sh" ]; then
+    echo "bootstrap  running .specify/agents-bootstrap.sh"
+    (cd "$tree" && ./.specify/agents-bootstrap.sh)
+  fi
 
   tmux new-session -d -s "$project/$branch" -c "$tree" \
     "SPECKIT_INTEGRATION_CLAUDE_EXTRA_ARGS='--permission-mode acceptEdits' \
