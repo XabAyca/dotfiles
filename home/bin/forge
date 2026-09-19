@@ -2,18 +2,22 @@
 set -euo pipefail
 HOST="forge"
 
+# Une entrée par worktree, pas par projet : les agents travaillent chacun dans
+# le sien, et la session tmux porte le nom "projet/worktree".
 liste=$(ssh -o BatchMode=yes "$HOST" '
-  tmux ls -F "#{session_name}" 2>/dev/null > /tmp/.s || : > /tmp/.s
-  cat /tmp/.s
-  for d in ~/projects/*/; do
-    p=$(basename "$d")
-    grep -qx "$p" /tmp/.s || echo "$p [nouveau]"
+  tmux ls -F "#{session_name}" 2>/dev/null | sort > /tmp/.forge-s || : > /tmp/.forge-s
+  for d in ~/projects/*/*/; do
+    w=${d%/}; w=${w#"$HOME"/projects/}
+    if grep -qx "$w" /tmp/.forge-s; then echo "$w"; else echo "$w [nouveau]"; fi
   done
+  # Une session dont le worktree a disparu resterait injoignable autrement.
+  while read -r s; do
+    [ -d "$HOME/projects/$s" ] || echo "$s [orphelin]"
+  done < /tmp/.forge-s
 ')
 
 s=$(printf "%s\n" "$liste" | fzf --prompt='< Sessions Forge > ' --height=40% --reverse)
 [ -z "${s:-}" ] && exit 0
-s=${s% \[nouveau\]}
+s=${s%% \[*}
 
-exec ssh -t "$HOST" "tmux new-session -A -s '$s' -c ~/projects/'$s'/main"
-EOF
+exec ssh -t "$HOST" "tmux new-session -A -s '$s' -c ~/projects/'$s'"
