@@ -30,7 +30,9 @@ code against what was specified, not against how you would have written it.
 - **Spec conformity** — every requirement implemented, nothing extra
 - **Plan adherence** — the stated approach was followed, or the deviation is justified
 - **Constitution** — cite the violated principle by name
-- **Tests** — present, meaningful, and passing
+- **Tests** — present, meaningful, and passing. If
+  `.specify/agents-baseline.txt` lists specs, those already failed before this
+  work: judge regressions only, and never try to fix them.
 - **Over-engineering** — run `/ponytail-review` on the diff and fold its
   findings into your verdict
 - **Craft** — no dead code, no commented-out code, no redundant comments
