@@ -1,0 +1,11 @@
+[Unit]
+Description=Carry questions from paused agent runs to a human, and answers back
+After=default.target
+
+[Service]
+Type=oneshot
+# The Slack channel reaches its tools through `claude -p`, which only loads
+# them in a trusted workspace — so the pass runs from one.
+WorkingDirectory=%h/projects/dotfiles/main
+Environment=PATH=%h/.local/share/mise/shims:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/agents/gateway/gateway scan

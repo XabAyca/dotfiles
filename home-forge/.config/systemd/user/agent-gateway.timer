@@ -1,0 +1,10 @@
+[Unit]
+Description=Look for questions waiting on a human
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=60s
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

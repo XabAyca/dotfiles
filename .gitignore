@@ -5,3 +5,8 @@ Gemfile.lock
 # this one is the point of the repo, unlike the per-project CLAUDE.md that
 # ~/.gitignore_global keeps out of client repos
 !home-forge/.claude/CLAUDE.md
+
+# systemd records "enabled" as an absolute symlink: machine state, not
+# configuration. Enable with:
+#   systemctl --user enable --now agent-gateway.timer
+home-forge/.config/systemd/user/*.wants/
