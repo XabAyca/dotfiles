@@ -14,9 +14,11 @@ STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
 SLACK_CONVERSATION=${SLACK_CONVERSATION:?set SLACK_CONVERSATION in config.env}
 # `claude -p` only loads its connectors in a trusted workspace.
 TRUSTED=${AGENT_TRUSTED_DIR:-$HOME/projects/dotfiles/main}
-# Verdicts quote the repository. Metadata travels by default; the content
-# stays on the machine and is read there.
-INCLUDE=${SLACK_INCLUDE_ATTACHMENT:-0}
+# A verdict quotes the repository at length in its `reason`; its `summary`
+# and `bullets` were written to be read by a human and say enough to decide.
+# Only the digest travels, so answering never requires opening a session on
+# the machine. Set to 0 to send nothing but the path.
+INCLUDE=${SLACK_INCLUDE_ATTACHMENT:-1}
 
 mkdir -p "$STATE/slack"
 
@@ -33,7 +35,12 @@ body=$(mktemp); trap 'rm -f "$body"' EXIT
   [ -n "$options" ] && printf '\nReply in this thread with: %s\n' "$options"
   if [ -n "$attachment" ]; then
     if [ "$INCLUDE" = 1 ] && [ -f "$tree/$attachment" ]; then
-      printf '\n```\n%s\n```\n' "$(head -c 3000 "$tree/$attachment")"
+      case "$attachment" in
+        *.json) jq -r '"\n*" + .status + "* — " + .summary,
+                       (.bullets[]? // empty | "• " + .)' "$tree/$attachment" ;;
+        *)      printf '\n'; head -c 3000 "$tree/$attachment" ;;
+      esac
+      printf '\nFull verdict on the machine: `%s/%s`\n' "$tree" "$attachment"
     else
       printf '\nRead first on the machine: `%s/%s`\n' "$tree" "$attachment"
     fi
