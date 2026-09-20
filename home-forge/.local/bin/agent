@@ -252,6 +252,7 @@ list() {
 done_() {
   local target=${1:?missing project/branch}
   local tree; tree=$(tree_of "$target")
+  idle_or_die "$tree"
   # The runner's own footprint is never committed, so it is not work.
   [ -z "$(git -C "$tree" status --porcelain -- "${RUNNER_EXCLUDE[@]}")" ] || {
     echo "$tree has uncommitted changes" >&2; exit 1; }
@@ -260,6 +261,9 @@ done_() {
   # Forced only because the check above already passed: git refuses a worktree
   # holding anything at all, and what is left is the runner's own footprint.
   git -C "$PROJECTS/${target%%/*}/main" worktree remove --force "$tree"
+  # The session's working directory has just gone; it would only survive to
+  # confuse the next listing.
+  tmux kill-session -t "$target" 2>/dev/null || true
   echo "removed $tree"
 }
 
