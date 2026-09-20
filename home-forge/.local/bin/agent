@@ -167,6 +167,12 @@ retry() {
   local tree; tree=$(tree_of "$target")
   local dir="$tree/.specify/workflows/runs/$run_id"
   [ -f "$dir/state.json" ] || { echo "no such run: $run_id" >&2; exit 1; }
+  # ponytail: this rewrites the engine's own state. Fail loudly if the fields
+  # it depends on ever move, rather than corrupt a run in silence.
+  jq -e 'has("status") and has("current_step_index") and has("current_step_id")' \
+     "$dir/state.json" >/dev/null || {
+    echo "state.json no longer has the fields retry rewrites; check the Spec Kit version" >&2
+    exit 1; }
   idle_or_die "$tree"
 
   # The verdicts go with the rewind, so the next pass judges what now stands.
