@@ -115,10 +115,13 @@ answer() {
   shift 2
   [ $# -gt 0 ] || usage
   local tree="$PROJECTS/${target%%/*}/${target#*/}"
-  cd "$tree"
-  local args=()
-  for kv in "$@"; do args+=(--input "$kv"); done
-  specify workflow resume "$run_id" "${args[@]}" --json < /dev/null
+  local args=""
+  local kv
+  for kv in "$@"; do args="$args --input $kv"; done
+  # Detached like every other way of starting the engine: answering a gate
+  # must not hold the caller for as long as the rest of the run takes.
+  in_tmux "$target" "$tree" "specify workflow resume $run_id$args"
+  echo "answered  $run_id$args"
 }
 
 resume() {
