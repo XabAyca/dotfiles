@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.4.0"
+  version: "0.5.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -33,6 +33,10 @@ inputs:
     enum: ["", approve, reject]
     default: ""
   analyze_verdict:
+    type: string
+    enum: ["", approve, reject]
+    default: ""
+  converge_verdict:
     type: string
     enum: ["", approve, reject]
     default: ""
@@ -115,23 +119,33 @@ steps:
     type: shell
     run: 'bash $HOME/agents/feature/scripts/read-analyze.sh {{ context.run_id }}'
 
+  # A critical finding needs a human before any code is written; a high one
+  # the agent settles on its own. Both are findings — neither is dropped.
   - id: contradictions
-    type: if
-    condition: "{{ steps.read-analyze.output.stdout == 'BLOCKING' }}"
-    then:
-      - id: analyze-gate
-        type: gate
-        message: "The analysis found a constitution breach or an uncovered requirement. Settle it before any code is written."
-        show_file: ".specify/state/{{ context.run_id }}/analyze.json"
-        options: [approve, reject]
-        on_reject: abort
-        verdict_input: analyze_verdict
+    type: switch
+    expression: "{{ steps.read-analyze.output.stdout }}"
+    cases:
+      BLOCKING:
+        - id: analyze-gate
+          type: gate
+          message: "The analysis found a constitution breach or an uncovered requirement. Settle it before any code is written."
+          show_file: ".specify/state/{{ context.run_id }}/analyze.json"
+          options: [approve, reject]
+          on_reject: abort
+          verdict_input: analyze_verdict
 
-      - id: apply-analysis
-        type: prompt
-        integration: "{{ inputs.integration }}"
-        timeout: 1800
-        prompt: "Read .specify/state/{{ context.run_id }}/analyze.json and, if present, human-answer.md. Correct the spec, the plan or the tasks so the critical findings no longer hold. Write no code."
+        - id: apply-analysis
+          type: prompt
+          integration: "{{ inputs.integration }}"
+          timeout: 1800
+          prompt: "Read .specify/state/{{ context.run_id }}/analyze.json and, if present, human-answer.md. Correct the spec, the plan or the tasks so the critical findings no longer hold. Write no code."
+
+      CONCERNS:
+        - id: apply-concerns
+          type: prompt
+          integration: "{{ inputs.integration }}"
+          timeout: 1800
+          prompt: "Read .specify/state/{{ context.run_id }}/analyze.json. Correct the spec, the plan or the tasks so the high-severity findings no longer hold. Write no code."
 
   - id: implement
     command: speckit.implement
@@ -169,6 +183,20 @@ steps:
             integration: "{{ inputs.integration }}"
             input:
               args: "{{ inputs.spec }}"
+
+  # Convergence that never settles is a plan that was too small, not a lap to
+  # run again. The loop leaves on EXHAUSTED exactly as it does on CONVERGED.
+  - id: overgrown
+    type: if
+    condition: "{{ steps.converged.output.stdout == 'EXHAUSTED' }}"
+    then:
+      - id: converge-gate
+        type: gate
+        message: "Convergence is still appending work after the last round. Approve to review and ship what exists, or reject to stop and replan."
+        show_file: ".specify/state/{{ context.run_id }}/converge.md"
+        options: [approve, reject]
+        on_reject: abort
+        verdict_input: converge_verdict
 
   # Quality, by us. Spec Kit says whether everything was built; these say
   # whether it was built well.
