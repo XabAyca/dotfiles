@@ -282,4 +282,7 @@ steps:
         then:
           - id: do-open-pr
             type: shell
+            # A shell step defaults to 300s, and a push can outlast it after
+            # having succeeded.
+            timeout: 900
             run: 'bash $HOME/agents/feature/scripts/open-pr.sh {{ context.run_id }}'
