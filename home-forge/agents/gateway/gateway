@@ -76,6 +76,10 @@ announce() {
   step=$(jq -r '.current_step_id // "-"' "$state_file")
 
   case "$status" in paused|failed) ;; *) return 0 ;; esac
+  # A rewind writes "failed" a moment before the engine restarts, so a failure
+  # is only worth announcing once it has survived a tick.
+  [ "$status" = failed ] \
+    && [ $(( $(date +%s) - $(stat -c %Y "$state_file") )) -lt "$TICK" ] && return 0
 
   local id; id=$(request_id "$target" "$run_id" "$step")
   [ -e "$STATE/requests/$id.json" ] && return 0
