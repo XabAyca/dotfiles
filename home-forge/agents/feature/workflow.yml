@@ -157,8 +157,8 @@ steps:
 
       - id: ship-gate
         type: gate
-        message: "Feature ready, gates green. Push the branch and open a draft PR?"
-        show_file: ".specify/state/{{ context.run_id }}/review.json"
+        message: "Push the branch and open a draft PR? Read the record below first."
+        show_file: ".specify/state/{{ context.run_id }}/ship.md"
         options: [push, reject]
         # skip only skips the gate itself: the rejection must be carried over
         # to the next step, otherwise the PR would go out anyway.
