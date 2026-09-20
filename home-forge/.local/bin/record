@@ -63,6 +63,8 @@ if length == 0 then empty else . end
              | {step: .key, answer: (.value.output.choice // null)}],
      review: ($review[0] | if . then {status, summary} else null end),
      ui: ($ui[0] | if . then {status, summary} else null end),
+     # What you told the run. It lives in the worktree and dies with it.
+     answers: (if $answers == "" then null else $answers end),
      shipped: (($s.step_results["do-open-pr"].status // "") == "completed"),
      slowest: [$w.secs | to_entries[] | select($w.type[.key] | leaf)
                | {step: .key, seconds: (.value | round)}]
@@ -97,6 +99,7 @@ record_run() {
      --slurpfile state "$state_file" \
      --slurpfile review <(cat "$feature_state/review.json" 2>/dev/null || echo null) \
      --slurpfile ui     <(cat "$feature_state/ui.json"     2>/dev/null || echo null) \
+     --arg answers "$(cat "$feature_state/human-answer.md" 2>/dev/null || true)" \
      "$program" < <(jq -s '.' "$run_dir/log.jsonl") > "$tmp"
   mv "$tmp" "$out"
   echo "recorded  $target  $run_id"
