@@ -35,9 +35,9 @@ engine_pid() {
 
 # Detached, and never --json: that mode keeps stdout for its final object and
 # `claude -p` prints nothing until a step ends, so the pane would look dead.
+# The session ends on a shell, so it outlives the engine and can be read.
 in_tmux() {
   local name=$1 dir=$2 cmd=$3
-  # The session ends on a shell, so it outlives the engine and can be read.
   tmux kill-session -t "$name" 2>/dev/null || true
   tmux new-session -d -s "$name" -c "$dir" \
     "SPECKIT_INTEGRATION_CLAUDE_EXTRA_ARGS='--permission-mode acceptEdits' \
@@ -226,6 +226,8 @@ done_() {
   # The runner's own footprint is never committed, so it is not work.
   [ -z "$(git -C "$tree" status --porcelain -- "${RUNNER_EXCLUDE[@]}")" ] || {
     echo "$tree has uncommitted changes" >&2; exit 1; }
+  # Last chance: what the runs cost goes away with the worktree otherwise.
+  record run "$target"
   git -C "$PROJECTS/${target%%/*}/main" worktree remove "$tree"
   echo "removed $tree"
 }

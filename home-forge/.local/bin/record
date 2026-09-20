@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+# Keeps what a run cost and what it decided. The engine's own log lives in the
+# worktree and dies with it, so the only lasting record is the one taken here.
+set -euo pipefail
+
+STATE=${AGENT_RECORD_STATE:-$HOME/.local/state/agent/runs}
+PROJECTS=${AGENT_PROJECTS:-$HOME/projects}
+
+usage() {
+  cat >&2 <<'USAGE'
+usage:
+  record run <project>/<branch> [run_id]   record one run, or all of its runs
+  record scan                              record every run that has finished
+  record log [n]                           the last n runs, newest first
+  record show <run_id>                     one run in full
+USAGE
+  exit 1
+}
+
+program='
+def ts: sub("\\.[0-9]+";"") | sub("\\+00:00";"Z") | fromdateiso8601;
+def leaf: . == "command" or . == "prompt" or . == "shell" or . == "gate";
+def model: . == "command" or . == "prompt";
+# Pair each start with the end that follows it. A container (if, do-while)
+# spans its children, so only leaves are summed.
+def walk: reduce .[] as $e (
+  {open:{}, secs:{}, runs:{}, type:{}, first:null, last:null};
+  .last = $e.timestamp
+  | (if .first == null then .first = $e.timestamp else . end)
+  | if $e.event == "step_started" then
+      .open[$e.step_id] = $e.timestamp | .type[$e.step_id] = $e.type
+    elif ($e.event == "step_completed" or $e.event == "step_failed")
+         and (.open[$e.step_id] != null) then
+      .secs[$e.step_id] = ((.secs[$e.step_id] // 0)
+                           + (($e.timestamp | ts) - (.open[$e.step_id] | ts)))
+      | .runs[$e.step_id] = ((.runs[$e.step_id] // 0) + 1)
+      | .open = (.open | del(.[$e.step_id]))
+    else . end);
+
+if length == 0 then empty else . end
+| walk as $w
+| ($state[0]) as $s
+  # A resume replays steps it had already completed, so a pass is a distinct
+  # step id and an execution is a cost. They are not the same number.
+| (def passes($n): [$w.runs | keys[]
+     | select(. == $n or test("-loop:" + $n + ":[0-9]+$"))] | length;
+   {
+     target: $target, run_id: $s.run_id, workflow: $s.workflow_id,
+     version: $version, status: $s.status,
+     started_at: $w.first, ended_at: $w.last,
+     wall_seconds: (($w.last | ts) - ($w.first | ts) | round),
+     engine_seconds: ([$w.secs | to_entries[]
+        | select($w.type[.key] | leaf) | .value] | add // 0 | round),
+     model_seconds: ([$w.secs | to_entries[]
+        | select($w.type[.key] | model) | .value] | add // 0 | round),
+     model_calls: ([$w.runs | to_entries[]
+        | select($w.type[.key] | model) | .value] | add // 0),
+     replays: ([$w.runs | to_entries[]
+        | select($w.type[.key] | leaf) | .value - 1] | add // 0),
+     review_passes: passes("review"),
+     converge_rounds: passes("converge"),
+     gates: [$s.step_results | to_entries[] | select(.value.type == "gate")
+             | {step: .key, answer: (.value.output.choice // null)}],
+     review: ($review[0] | if . then {status, summary} else null end),
+     ui: ($ui[0] | if . then {status, summary} else null end),
+     shipped: (($s.step_results["do-open-pr"].status // "") == "completed"),
+     slowest: [$w.secs | to_entries[] | select($w.type[.key] | leaf)
+               | {step: .key, seconds: (.value | round)}]
+              | sort_by(-.seconds) | .[0:5]
+   })
+'
+
+# A run is worth recording once it can no longer change.
+finished() { case "$1" in completed|failed|aborted) return 0 ;; *) return 1 ;; esac; }
+
+record_run() {
+  local tree=$1 target=$2 run_dir=$3
+  local run_id; run_id=$(basename "$run_dir")
+  local state_file="$run_dir/state.json"
+  [ -f "$state_file" ] || return 0
+  finished "$(jq -r '.status' "$state_file")" || return 0
+
+  local out="$STATE/${target//\//_}__${run_id}.json"
+  [ -f "$out" ] && [ "$out" -nt "$state_file" ] && return 0
+
+  # The engine rewrites the YAML when it freezes a run, quotes dropped.
+  local version
+  version=$(sed -n 's/^[[:space:]]*version:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' \
+            "$run_dir/workflow.yml" | head -1)
+
+  local feature_state="$tree/.specify/state/$run_id"
+  mkdir -p "$STATE"
+  local tmp; tmp=$(mktemp)
+  # Through a temp file: a failure here must not leave a truncated record
+  # that the next pass would mistake for a run already accounted for.
+  jq --arg target "$target" --arg version "${version:-?}" \
+     --slurpfile state "$state_file" \
+     --slurpfile review <(cat "$feature_state/review.json" 2>/dev/null || echo null) \
+     --slurpfile ui     <(cat "$feature_state/ui.json"     2>/dev/null || echo null) \
+     "$program" < <(jq -s '.' "$run_dir/log.jsonl") > "$tmp"
+  mv "$tmp" "$out"
+  echo "recorded  $target  $run_id"
+}
+
+run() {
+  local target=${1:?missing project/branch} only=${2:-}
+  local tree="$PROJECTS/$target" d
+  for d in "$tree"/.specify/workflows/runs/*/; do
+    [ -d "$d" ] || continue
+    [ -n "$only" ] && [ "$(basename "$d")" != "$only" ] && continue
+    record_run "$tree" "$target" "${d%/}"
+  done
+}
+
+scan() {
+  local tree project target d
+  for tree in "$PROJECTS"/*/*/; do
+    [ -d "$tree/.specify/workflows/runs" ] || continue
+    project=$(basename "$(dirname "$tree")")
+    target="$project/$(basename "$tree")"
+    for d in "$tree"/.specify/workflows/runs/*/; do
+      [ -d "$d" ] || continue
+      record_run "${tree%/}" "$target" "${d%/}"
+    done
+  done
+}
+
+log() {
+  local n=${1:-20} f
+  [ -d "$STATE" ] || { echo "nothing recorded yet"; return 0; }
+  # shellcheck disable=SC2012
+  ls -t "$STATE"/*.json 2>/dev/null | head -"$n" | while read -r f; do
+    jq -r '"\(.target)  \(.run_id)  \(.status)\t" +
+           "\(.model_calls) calls  \(.model_seconds / 60 | round)m model  " +
+           "\(.wall_seconds / 3600 | round)h wall  " +
+           "review x\(.review_passes)  converge x\(.converge_rounds)  " +
+           "replay \(.replays)  " +
+           (if .shipped then "shipped" else "-" end)' "$f"
+  done | column -t -s "$(printf '\t')"
+}
+
+show() {
+  local run_id=${1:?missing run_id} f
+  for f in "$STATE"/*__"$run_id".json; do
+    [ -f "$f" ] || { echo "no record for $run_id" >&2; exit 1; }
+    jq . "$f"
+  done
+}
+
+case ${1:-} in
+  run)  shift; run "$@" ;;
+  scan) shift; scan ;;
+  log)  shift; log "$@" ;;
+  show) shift; show "$@" ;;
+  *)    usage ;;
+esac

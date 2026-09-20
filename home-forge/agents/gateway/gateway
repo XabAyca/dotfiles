@@ -158,6 +158,9 @@ scan() {
     [ -f "$req" ] || continue
     apply "$req"
   done
+  # The only sweep of every run on this machine, so it carries the bookkeeping
+  # too. A failure here must not cost the questions their pass.
+  record scan || echo "record scan failed" >&2
 }
 
 status() {
