@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Writes the question into a local inbox and opens the file that will hold
+# the answer. No network, no account: the channel that lets the gateway be
+# developed and tested, and the one left when every other channel is down.
+set -euo pipefail
+
+req=${1:?missing request}
+STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
+mkdir -p "$STATE/answers"
+
+id=$(jq -r '.id' "$req")
+answer="$STATE/answers/$id"
+
+{
+  echo
+  echo "## $(date '+%Y-%m-%d %H:%M')  $(jq -r '.target' "$req")"
+  echo
+  jq -r '.question' "$req"
+  echo
+  opts=$(jq -r '.options | join(" | ")' "$req")
+  [ -n "$opts" ] && echo "answer with: $opts"
+  att=$(jq -r '.attachment // empty' "$req")
+  [ -n "$att" ] && echo "read first : $(jq -r '.tree' "$req")/$att"
+  [ -n "$opts" ] && echo "reply     : echo <choice> > $answer"
+  echo
+  echo '---'
+} >> "$STATE/inbox.md"
+
+printf %s "$answer"

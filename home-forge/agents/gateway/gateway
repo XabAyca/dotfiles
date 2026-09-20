@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+# Carries a question from a paused run to a human, and the answer back.
+#
+# Knows nothing about any channel: a channel is a directory under channels/
+# holding two executables.
+#   notify <request.json>  delivers the question, prints a handle on stdout
+#   poll   <request.json>  prints the answer, or nothing when none has come
+#
+# Everything a channel cannot be trusted with — that the run exists, that the
+# choice is one the gate offered — is checked here, after the channel has
+# spoken.
+set -euo pipefail
+
+HERE=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
+PROJECTS=${AGENT_PROJECTS:-$HOME/projects}
+CHANNEL=${AGENT_GATEWAY_CHANNEL:-file}
+TICK=${AGENT_GATEWAY_TICK:-60}
+
+[ -f "$HERE/config.env" ] && . "$HERE/config.env"
+
+mkdir -p "$STATE/requests" "$STATE/done"
+
+usage() {
+  cat >&2 <<'USAGE'
+usage:
+  gateway scan     one pass: announce what is waiting, apply what has answered
+  gateway run      the same, every tick, until stopped
+  gateway status   what is outstanding
+USAGE
+  exit 1
+}
+
+channel() {
+  local verb=$1; shift
+  local exe="$HERE/channels/$CHANNEL/$verb"
+  [ -x "$exe" ] || { echo "channel $CHANNEL has no $verb" >&2; return 1; }
+  "$exe" "$@"
+}
+
+# A run is identified by where it lives, which run it is, and which step is
+# waiting. All three are needed to answer, and none of them is invented.
+request_id() { printf '%s__%s__%s' "${1//\//_}" "$2" "$3"; }
+
+# The gate's step result says what was asked; only the workflow says which
+# input carries the answer.
+verdict_input_of() {
+  local wf=$1 step=$2
+  awk -v step="$step" '
+    $0 ~ "^[[:space:]]*-[[:space:]]*id:[[:space:]]*" step "[[:space:]]*$" { inside = 1; next }
+    inside && /^[[:space:]]*-[[:space:]]*id:/ { exit }
+    inside && /^[[:space:]]*verdict_input:/ { gsub(/^[[:space:]]*verdict_input:[[:space:]]*/, ""); print; exit }
+  ' "$wf"
+}
+
+announce() {
+  local run_dir=$1 target=$2 project=$3
+  local state_file="$run_dir/state.json" wf="$run_dir/workflow.yml"
+  local run_id status step
+  run_id=$(jq -r '.run_id' "$state_file")
+  status=$(jq -r '.status' "$state_file")
+  step=$(jq -r '.current_step_id // "-"' "$state_file")
+
+  case "$status" in paused|failed) ;; *) return 0 ;; esac
+
+  local id; id=$(request_id "$target" "$run_id" "$step")
+  [ -e "$STATE/requests/$id.json" ] && return 0
+  [ -e "$STATE/done/$id.json" ] && return 0
+
+  local tree="$PROJECTS/$target" input="" req
+  req=$(mktemp)
+  if [ "$status" = paused ]; then
+    input=$(verdict_input_of "$wf" "$step")
+    jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
+          --arg run "$run_id" --arg step "$step" --arg input "$input" \
+          --arg tree "$tree" --slurpfile s "$state_file" \
+      '{id: $id, kind: "gate", target: $target, project: $project,
+        run_id: $run, step: $step, input: $input, tree: $tree,
+        question: ($s[0].step_results[$step].output.message // "?"),
+        options: ($s[0].step_results[$step].output.options // []),
+        attachment: ($s[0].step_results[$step].output.show_file // null)}' > "$req"
+  else
+    jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
+          --arg run "$run_id" --arg step "$step" --arg tree "$tree" \
+          --slurpfile s "$state_file" \
+      '{id: $id, kind: "failure", target: $target, project: $project,
+        run_id: $run, step: $step, input: "", tree: $tree,
+        question: ("The run stopped at " + $step + ": " + ($s[0].error // "no reason recorded")),
+        options: [], attachment: null}' > "$req"
+  fi
+
+  local handle
+  handle=$(channel notify "$req") || { rm -f "$req"; echo "notify failed for $id" >&2; return 0; }
+  jq --arg h "$handle" '. + {handle: $h}' "$req" > "$STATE/requests/$id.json"
+  rm -f "$req"
+  echo "asked     $id"
+}
+
+apply() {
+  local req=$1
+  local id kind options choice input target run tree
+  id=$(jq -r '.id' "$req"); kind=$(jq -r '.kind' "$req")
+
+  # A failure has nothing to answer: it was said once, and that is all.
+  [ "$kind" = failure ] && { mv "$req" "$STATE/done/"; return 0; }
+
+  choice=$(channel poll "$req" || true)
+  [ -n "$choice" ] || return 0
+
+  options=$(jq -r '.options[]' "$req")
+  grep -qxF -- "$choice" <<< "$options" || {
+    echo "refused   $id: '$choice' is not one of the offered options" >&2; return 0; }
+
+  input=$(jq -r '.input' "$req")
+  [ -n "$input" ] || { echo "refused   $id: the gate declares no verdict_input" >&2; return 0; }
+
+  target=$(jq -r '.target' "$req"); run=$(jq -r '.run_id' "$req")
+  tree=$(jq -r '.tree' "$req")
+  # The run must still be waiting: an answer to a question already settled
+  # elsewhere must not restart anything.
+  [ "$(jq -r '.status' "$tree/.specify/workflows/runs/$run/state.json")" = paused ] || {
+    echo "refused   $id: the run is no longer paused" >&2
+    mv "$req" "$STATE/done/"; return 0; }
+
+  agent answer "$target" "$run" "$input=$choice" >/dev/null
+  mv "$req" "$STATE/done/"
+  echo "answered  $id  $input=$choice"
+}
+
+scan() {
+  local tree project target
+  for tree in "$PROJECTS"/*/*/; do
+    [ -d "$tree/.specify/workflows/runs" ] || continue
+    project=$(basename "$(dirname "$tree")")
+    target="$project/$(basename "$tree")"
+    local run_dir
+    for run_dir in "$tree"/.specify/workflows/runs/*/; do
+      [ -f "$run_dir/state.json" ] || continue
+      announce "${run_dir%/}" "$target" "$project"
+    done
+  done
+  local req
+  for req in "$STATE/requests"/*.json; do
+    [ -f "$req" ] || continue
+    apply "$req"
+  done
+}
+
+status() {
+  local req
+  for req in "$STATE/requests"/*.json; do
+    [ -f "$req" ] || { echo "nothing outstanding"; return 0; }
+    jq -r '"\(.id)  \(.kind)  \(.options | join("/"))"' "$req"
+  done
+}
+
+case ${1:-} in
+  scan)   scan ;;
+  run)    while :; do scan; sleep "$TICK"; done ;;
+  status) status ;;
+  *)      usage ;;
+esac
