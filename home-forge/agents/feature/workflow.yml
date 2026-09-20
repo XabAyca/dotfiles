@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.6.0"
+  version: "0.7.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -240,7 +240,7 @@ steps:
       - id: review-gate
         type: gate
         message: "The review loop did not converge. Approve to ship as is, reject to stop, or reply with instructions — which count as approve, so the branch ships once they are applied."
-        show_file: ".specify/state/{{ context.run_id }}/review.json"
+        show_file: ".specify/state/{{ context.run_id }}/verdict.md"
         answer_file: human-answer.md
         options: [approve, reject]
         on_reject: abort

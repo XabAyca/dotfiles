@@ -38,5 +38,17 @@ case "${review}/${ui}" in
   *) echo "unexpected combination: ${review}/${ui}" >&2; exit 1 ;;
 esac
 
+# The gate that may follow shows one file, and either verdict can be the one
+# that escalated.
+{
+  for f in review ui; do
+    [ -f "${state}/${f}.json" ] || continue
+    printf '## %s — %s\n\n' "$f" "$(jq -r '.status' "${state}/${f}.json")"
+    jq -r '.summary' "${state}/${f}.json"
+    jq -r '.bullets[]? // empty | "- " + .' "${state}/${f}.json"
+    printf '\n'
+  done
+} > "${state}/verdict.md"
+
 # No newline: the engine compares raw stdout against the literal.
 printf %s "$verdict"
