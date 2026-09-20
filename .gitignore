@@ -10,3 +10,6 @@ Gemfile.lock
 # configuration. Enable with:
 #   systemctl --user enable --now agent-gateway.timer
 home-forge/.config/systemd/user/*.wants/
+
+# names a Slack conversation: machine configuration, not dotfiles
+home-forge/agents/gateway/config.env

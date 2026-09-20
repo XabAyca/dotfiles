@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Posts the question into a Slack conversation through the MCP connector, and
+# returns the message timestamp. That timestamp is the correlation key: the
+# answer is whatever is replied in its thread, so nothing has to be echoed
+# back and nothing can be mixed up.
+#
+# The connector posts as the account it is attached to, so the conversation is
+# a record and a reply surface — it does not notify.
+set -euo pipefail
+
+req=${1:?missing request}
+
+STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
+SLACK_CONVERSATION=${SLACK_CONVERSATION:?set SLACK_CONVERSATION in config.env}
+# `claude -p` only loads its connectors in a trusted workspace.
+TRUSTED=${AGENT_TRUSTED_DIR:-$HOME/projects/dotfiles/main}
+# Verdicts quote the repository. Metadata travels by default; the content
+# stays on the machine and is read there.
+INCLUDE=${SLACK_INCLUDE_ATTACHMENT:-0}
+
+mkdir -p "$STATE/slack"
+
+target=$(jq -r '.target' "$req")
+question=$(jq -r '.question' "$req")
+options=$(jq -r '.options | join(" · ")' "$req")
+attachment=$(jq -r '.attachment // empty' "$req")
+tree=$(jq -r '.tree' "$req")
+run=$(jq -r '.run_id' "$req")
+
+body=$(mktemp); trap 'rm -f "$body"' EXIT
+{
+  printf '*%s* — run `%s`\n\n%s\n' "$target" "$run" "$question"
+  [ -n "$options" ] && printf '\nReply in this thread with: %s\n' "$options"
+  if [ -n "$attachment" ]; then
+    if [ "$INCLUDE" = 1 ] && [ -f "$tree/$attachment" ]; then
+      printf '\n```\n%s\n```\n' "$(head -c 3000 "$tree/$attachment")"
+    else
+      printf '\nRead first on the machine: `%s/%s`\n' "$tree" "$attachment"
+    fi
+  fi
+} > "$body"
+
+# The prompt carries no instruction that the message text could alter: the
+# text is handed over as a file, and only the timestamp is asked back.
+ts=$(cd "$TRUSTED" && claude -p --permission-mode acceptEdits \
+  "Post the exact contents of the file $body as a Slack message to conversation $SLACK_CONVERSATION. Do not summarise, translate or add to it. Then answer with the message_ts value alone — digits, a dot, digits — and nothing else." \
+  < /dev/null 2>/dev/null | tr -d '[:space:]')
+
+grep -qE '^[0-9]+\.[0-9]+$' <<< "$ts" || {
+  echo "slack notify: no usable message_ts came back" >&2; exit 1; }
+
+printf %s "$ts"
