@@ -27,9 +27,11 @@ echo "$now" > "$stamp"
 reply=$(cd "$TRUSTED" && printf %s \
   "Read the Slack thread whose parent message_ts is $ts in conversation $SLACK_CONVERSATION. If a reply to that parent exists, answer with the text of the most recent reply, verbatim, and nothing else — the thread may carry context posted by the machine itself, and only the last word counts. If there is no reply, answer exactly NONE. Never answer with the parent message itself." \
   | claude -p --allowedTools mcp__claude_ai_Slack__slack_read_thread \
-      2>/dev/null | tr -d '[:space:]')
+      2>/dev/null)
 
-[ "$reply" = NONE ] && exit 0
-[ -n "$reply" ] || exit 0
+# Whitespace survives: an answer can be a sentence and not just a word.
+word=$(printf %s "$reply" | tr -d '[:space:]')
+[ "$word" = NONE ] && exit 0
+[ -n "$word" ] || exit 0
 
 printf %s "$reply"

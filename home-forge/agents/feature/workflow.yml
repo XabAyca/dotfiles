@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.5.0"
+  version: "0.6.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -76,8 +76,11 @@ steps:
     then:
       - id: clarify-gate
         type: gate
-        message: "The spec still has open questions after /speckit-clarify. Write the answers into .specify/state/{{ context.run_id }}/human-answer.md, then approve."
+        message: "The spec still has open questions. Reply with the answers in plain text, or approve to let the agent settle them on its own, or reject to stop."
         show_file: ".specify/state/{{ context.run_id }}/questions.md"
+        # Not an engine key: it ignores this one and keeps it in the copy it
+        # freezes, which is where the gateway reads it.
+        answer_file: human-answer.md
         options: [approve, reject]
         on_reject: abort
         verdict_input: clarify_verdict
@@ -86,7 +89,7 @@ steps:
         type: prompt
         integration: "{{ inputs.integration }}"
         timeout: 1800
-        prompt: "Read .specify/state/{{ context.run_id }}/human-answer.md and resolve every remaining [NEEDS CLARIFICATION] marker in the spec accordingly. Revise any assumption the answers invalidate, and update the checklist. Write no code."
+        prompt: "If .specify/state/{{ context.run_id }}/human-answer.md exists, read it and resolve every remaining [NEEDS CLARIFICATION] marker in the spec accordingly. If it does not, resolve each marker with the most defensible reading of the spec and mark every choice you made. Either way, revise any assumption the answers invalidate and update the checklist. Write no code."
 
   - id: plan
     command: speckit.plan
@@ -236,8 +239,9 @@ steps:
     then:
       - id: review-gate
         type: gate
-        message: "The review loop did not converge. Read the verdict, then approve to ship anyway or reject to stop."
+        message: "The review loop did not converge. Approve to ship as is, reject to stop, or reply with instructions — which count as approve, so the branch ships once they are applied."
         show_file: ".specify/state/{{ context.run_id }}/review.json"
+        answer_file: human-answer.md
         options: [approve, reject]
         on_reject: abort
         verdict_input: review_verdict

@@ -20,6 +20,7 @@ mkdir -p "$STATE/slack"
 target=$(jq -r '.target' "$req")
 question=$(jq -r '.question' "$req")
 options=$(jq -r '.options | join(" · ")' "$req")
+[ "$(jq -r '.answer_file // empty' "$req")" ] && options="$options · or your answer in plain text"
 attachment=$(jq -r '.attachment // empty' "$req")
 tree=$(jq -r '.tree' "$req")
 run=$(jq -r '.run_id' "$req")

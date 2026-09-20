@@ -29,6 +29,8 @@ STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
 PROJECTS=${AGENT_PROJECTS:-$HOME/projects}
 CHANNEL=${AGENT_GATEWAY_CHANNEL:-file}
 TICK=${AGENT_GATEWAY_TICK:-60}
+# A written answer is a few sentences. Past this it is a paste by mistake.
+MAX_ANSWER=${AGENT_MAX_ANSWER:-4000}
 
 mkdir -p "$STATE/requests" "$STATE/done"
 
@@ -54,13 +56,14 @@ channel() {
 request_id() { printf '%s__%s__%s' "${1//\//_}" "$2" "$3"; }
 
 # The gate's step result says what was asked; only the workflow says which
-# input carries the answer.
-verdict_input_of() {
-  local wf=$1 step=$2
-  awk -v step="$step" '
+# input carries the answer, and where a written one is left.
+gate_field() {
+  local wf=$1 step=$2 key=$3
+  awk -v step="$step" -v key="$key" '
     $0 ~ "^[[:space:]]*-[[:space:]]*id:[[:space:]]*" step "[[:space:]]*$" { inside = 1; next }
     inside && /^[[:space:]]*-[[:space:]]*id:/ { exit }
-    inside && /^[[:space:]]*verdict_input:/ { gsub(/^[[:space:]]*verdict_input:[[:space:]]*/, ""); print; exit }
+    inside && $0 ~ "^[[:space:]]*" key ":" {
+      sub("^[[:space:]]*" key ":[[:space:]]*", ""); print; exit }
   ' "$wf"
 }
 
@@ -78,15 +81,18 @@ announce() {
   [ -e "$STATE/requests/$id.json" ] && return 0
   [ -e "$STATE/done/$id.json" ] && return 0
 
-  local tree="$PROJECTS/$target" input="" req
+  local tree="$PROJECTS/$target" input="" answer_file="" req
   req=$(mktemp)
   if [ "$status" = paused ]; then
-    input=$(verdict_input_of "$wf" "$step")
+    input=$(gate_field "$wf" "$step" verdict_input)
+    answer_file=$(gate_field "$wf" "$step" answer_file)
     jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
           --arg run "$run_id" --arg step "$step" --arg input "$input" \
+          --arg answer_file "$answer_file" \
           --arg tree "$tree" --slurpfile s "$state_file" \
       '{id: $id, kind: "gate", target: $target, project: $project,
         run_id: $run, step: $step, input: $input, tree: $tree,
+        answer_file: $answer_file,
         question: ($s[0].step_results[$step].output.message // "?"),
         options: ($s[0].step_results[$step].output.options // []),
         attachment: ($s[0].step_results[$step].output.show_file // null)}' > "$req"
@@ -95,7 +101,7 @@ announce() {
           --arg run "$run_id" --arg step "$step" --arg tree "$tree" \
           --slurpfile s "$state_file" \
       '{id: $id, kind: "failure", target: $target, project: $project,
-        run_id: $run, step: $step, input: "", tree: $tree,
+        run_id: $run, step: $step, input: "", tree: $tree, answer_file: "",
         question: ("The run stopped at " + $step + ": " + ($s[0].error // "no reason recorded")),
         options: [], attachment: null}' > "$req"
   fi
@@ -109,21 +115,14 @@ announce() {
 
 apply() {
   local req=$1
-  local id kind options choice input target run tree
+  local id kind options answer choice input target run tree step
   id=$(jq -r '.id' "$req"); kind=$(jq -r '.kind' "$req")
 
   # A failure has nothing to answer: it was said once, and that is all.
   [ "$kind" = failure ] && { mv "$req" "$STATE/done/"; return 0; }
 
-  choice=$(channel poll "$req" || true)
-  [ -n "$choice" ] || return 0
-
-  options=$(jq -r '.options[]' "$req")
-  grep -qxF -- "$choice" <<< "$options" || {
-    echo "refused   $id: '$choice' is not one of the offered options" >&2; return 0; }
-
-  input=$(jq -r '.input' "$req")
-  [ -n "$input" ] || { echo "refused   $id: the gate declares no verdict_input" >&2; return 0; }
+  answer=$(channel poll "$req" || true)
+  [ -n "$answer" ] || return 0
 
   target=$(jq -r '.target' "$req"); run=$(jq -r '.run_id' "$req")
   tree=$(jq -r '.tree' "$req"); step=$(jq -r '.step' "$req")
@@ -135,6 +134,29 @@ apply() {
   [ "$live" = "paused $step" ] || {
     echo "refused   $id: the run is now '$live', not paused on $step" >&2
     mv "$req" "$STATE/done/"; return 0; }
+
+  options=$(jq -r '.options[]' "$req")
+  choice=$(printf %s "$answer" | tr -d '[:space:]')
+  if ! grep -qxF -- "$choice" <<< "$options"; then
+    # Not one of the options, so it is prose — accepted only by a gate that
+    # asked for some. It travels as a file and never as an argument.
+    local file dir
+    file=$(jq -r '.answer_file // empty' "$req")
+    [ -n "$file" ] || {
+      echo "refused   $id: '$choice' is not one of the offered options" >&2; return 0; }
+    [ "${#answer}" -le "$MAX_ANSWER" ] || {
+      echo "refused   $id: the answer is longer than $MAX_ANSWER characters" >&2; return 0; }
+    dir="$tree/.specify/state/$run"
+    mkdir -p "$dir"
+    printf '%s\n' "$answer" > "$dir/$file"
+    # The gate still needs one of its own words, and the first is the one that
+    # carries on; a gate offering prose never has a reject in that position.
+    choice=$(head -1 <<< "$options")
+    echo "written   $id  $dir/$file"
+  fi
+
+  input=$(jq -r '.input' "$req")
+  [ -n "$input" ] || { echo "refused   $id: the gate declares no verdict_input" >&2; return 0; }
 
   agent answer "$target" "$run" "$input=$choice" >/dev/null
   mv "$req" "$STATE/done/"

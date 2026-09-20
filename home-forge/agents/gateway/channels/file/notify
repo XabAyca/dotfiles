@@ -17,6 +17,7 @@ answer="$STATE/answers/$id"
   jq -r '.question' "$req"
   echo
   opts=$(jq -r '.options | join(" | ")' "$req")
+  [ "$(jq -r '.answer_file // empty' "$req")" ] && opts="$opts | or the answer itself"
   [ -n "$opts" ] && echo "answer with: $opts"
   att=$(jq -r '.attachment // empty' "$req")
   [ -n "$att" ] && echo "read first : $(jq -r '.tree' "$req")/$att"

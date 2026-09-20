@@ -6,5 +6,5 @@ req=${1:?missing request}
 answer=$(jq -r '.handle // empty' "$req")
 [ -n "$answer" ] && [ -s "$answer" ] || exit 0
 
-head -1 "$answer" | tr -d '[:space:]'
+cat "$answer"
 rm -f "$answer"
