@@ -126,11 +126,14 @@ apply() {
   [ -n "$input" ] || { echo "refused   $id: the gate declares no verdict_input" >&2; return 0; }
 
   target=$(jq -r '.target' "$req"); run=$(jq -r '.run_id' "$req")
-  tree=$(jq -r '.tree' "$req")
-  # The run must still be waiting: an answer to a question already settled
-  # elsewhere must not restart anything.
-  [ "$(jq -r '.status' "$tree/.specify/workflows/runs/$run/state.json")" = paused ] || {
-    echo "refused   $id: the run is no longer paused" >&2
+  tree=$(jq -r '.tree' "$req"); step=$(jq -r '.step' "$req")
+  # The run must still be waiting on this very step. Checking only that it is
+  # paused would let a stale answer be applied to whatever gate came next.
+  local live
+  live=$(jq -r '.status + " " + (.current_step_id // "-")' \
+         "$tree/.specify/workflows/runs/$run/state.json")
+  [ "$live" = "paused $step" ] || {
+    echo "refused   $id: the run is now '$live', not paused on $step" >&2
     mv "$req" "$STATE/done/"; return 0; }
 
   agent answer "$target" "$run" "$input=$choice" >/dev/null
