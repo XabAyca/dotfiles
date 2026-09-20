@@ -12,12 +12,23 @@
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+# config.env holds this machine's configuration. What is already in the
+# environment wins, so a single pass can be pointed elsewhere for a test —
+# and reading the file has to happen before any default is applied, or the
+# file is read too late to matter.
+if [ -f "$HERE/config.env" ]; then
+  while IFS='=' read -r key value; do
+    case "$key" in ''|'#'*) continue ;; esac
+    value=${value%%#*}
+    value=${value%"${value##*[![:space:]]}"}
+    [ -n "${!key:-}" ] || export "$key=$value"
+  done < "$HERE/config.env"
+fi
+
 STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
 PROJECTS=${AGENT_PROJECTS:-$HOME/projects}
 CHANNEL=${AGENT_GATEWAY_CHANNEL:-file}
 TICK=${AGENT_GATEWAY_TICK:-60}
-
-[ -f "$HERE/config.env" ] && . "$HERE/config.env"
 
 mkdir -p "$STATE/requests" "$STATE/done"
 
