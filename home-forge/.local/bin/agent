@@ -160,6 +160,20 @@ retry() {
 
   # The engine rewrites the workflow when it freezes a run, so the indentation
   # of a top-level step is not the one in the source. Read it from the file.
+  # A verdict_input keeps the answer it was given for the whole run, and a
+  # non-empty one decides its gate without ever asking again. Rewinding
+  # without clearing them would replay two-hour-old decisions in silence.
+  local names tmp2
+  names=$(grep -oE 'verdict_input:[[:space:]]*[A-Za-z0-9_]+' "$dir/workflow.yml" \
+          | awk '{print $2}' | sort -u)
+  if [ -n "$names" ]; then
+    tmp2=$(mktemp)
+    jq --arg n "$names" \
+       'reduce ($n | split("\n")[]) as $k (.; .inputs[$k] = "")' \
+       "$dir/inputs.json" > "$tmp2" && mv "$tmp2" "$dir/inputs.json"
+    echo "cleared   $(echo "$names" | tr '\n' ' ')"
+  fi
+
   local pad idx tmp
   pad=$(awk '/^steps:/{f=1; next} f && /- id: /{match($0, /^ */); print substr($0, 1, RLENGTH); exit}' \
         "$dir/workflow.yml")
