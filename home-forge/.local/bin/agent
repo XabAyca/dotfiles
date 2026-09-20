@@ -52,6 +52,13 @@ start() {
   local main="$PROJECTS/$project/main"
   [ -d "$main/.specify" ] || { echo "$project is not a Spec Kit project" >&2; exit 1; }
 
+  # The PR will target the default branch, so the work starts from it and from
+  # its current tip — not from whatever this checkout happens to have. Fetched
+  # here and not later: the numbering below counts the remote branches too.
+  local base
+  base=$(cd "$main" && gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
+  git -C "$main" fetch --quiet origin "$base"
+
   # Spec Kit numbers from the specs/ of this checkout, which knows nothing of
   # features still on unmerged branches. Count the branches too, or two
   # features started in parallel claim the same number.
@@ -77,8 +84,7 @@ start() {
   local tree="$PROJECTS/$project/$branch"
   [ -e "$tree" ] && { echo "$tree already exists" >&2; exit 1; }
 
-  git -C "$main" fetch --quiet origin
-  git -C "$main" worktree add "$tree" -b "$branch"
+  git -C "$main" worktree add "$tree" -b "$branch" "origin/$base"
 
   # The installed workflow is not committed, so each worktree gets its own copy.
   (cd "$tree" && specify workflow add --dev "$AGENTS" >/dev/null)
