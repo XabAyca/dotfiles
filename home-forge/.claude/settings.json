@@ -20,8 +20,10 @@
       "Bash(cargo fmt:*)",
       "Bash(cargo audit:*)"
     ],
+    "ask": [
+      "Bash(git push:*)"
+    ],
     "deny": [
-      "Bash(git push:*)",
       "Bash(git reset --hard:*)",
       "Bash(sudo:*)",
       "Bash(rm -rf:*)"
