@@ -172,13 +172,14 @@ scan() {
     local run_dir
     for run_dir in "$tree"/.specify/workflows/runs/*/; do
       [ -f "$run_dir/state.json" ] || continue
-      announce "${run_dir%/}" "$target" "$project"
+      announce "${run_dir%/}" "$target" "$project" \
+        || echo "announce failed for $target $(basename "$run_dir")" >&2
     done
   done
   local req
   for req in "$STATE/requests"/*.json; do
     [ -f "$req" ] || continue
-    apply "$req"
+    apply "$req" || echo "apply failed for $(basename "$req" .json)" >&2
   done
   # The only sweep of every run on this machine, so it carries the bookkeeping
   # too. A failure here must not cost the questions their pass.
