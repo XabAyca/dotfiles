@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Reports whether the freshly written spec still carries open questions, and
-# collects them where the human gate can show them.
+# Collects the questions the spec still carries, where the gate can show them.
 set -euo pipefail
 
 run_id=${1:?missing run_id}

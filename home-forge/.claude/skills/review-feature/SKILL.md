@@ -35,7 +35,10 @@ code against what was specified, not against how you would have written it.
   work: judge regressions only, and never try to fix them.
 - **Over-engineering** — run `/ponytail-review` on the diff and fold its
   findings into your verdict
-- **Craft** — no dead code, no commented-out code, no redundant comments
+- **Craft** — no dead code, no commented-out code
+- **Comments** — one per non-obvious reason. A paraphrase of the code, the
+  story of a bug already fixed, or more than one comment per ten lines of code
+  (the file header aside) is a finding
 
 ## What you must not do
 

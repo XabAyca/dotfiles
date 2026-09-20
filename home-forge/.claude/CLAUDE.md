@@ -69,7 +69,11 @@ Baseline rules for any agent working on this machine, in any project. A project'
 - No abstraction before the third occurrence. No layer, config knob or plugin hook "for
   later". Delete code rather than comment it out; git remembers.
 - Small focused changes. If a change is turning into three, say so and split it.
-- Names say what a thing is; comments say why, never what.
+- Names say what a thing is; comments say why, never what. One comment per
+  non-obvious reason and no more: no story of a bug already fixed, no
+  justification of an obvious choice, no paraphrase of the line below. A line
+  that needs explaining gets rewritten instead. Past one comment per ten lines
+  of code — the opening header aside — a file is over-commented.
 - Leave the place runnable: if something is half-done, name it explicitly.
 
 ## Git

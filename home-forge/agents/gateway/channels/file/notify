@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Writes the question into a local inbox and opens the file that will hold
-# the answer. No network, no account: the channel that lets the gateway be
-# developed and tested, and the one left when every other channel is down.
+# Writes the question into a local inbox and opens the file that will hold the
+# answer. No network, no account: the channel left when the others are down.
 set -euo pipefail
 
 req=${1:?missing request}

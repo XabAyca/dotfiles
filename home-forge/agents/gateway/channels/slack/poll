@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# Reads the thread the question opened and returns the first reply.
-#
-# A reply is trusted for nothing: the gateway checks it against the options
-# the gate declared. Claude is a transport here, not a judge.
+# Reads the thread the question opened and returns the last reply. A reply is
+# trusted for nothing: the gateway checks it against the declared options.
 set -euo pipefail
 
 req=${1:?missing request}
@@ -10,8 +8,7 @@ req=${1:?missing request}
 STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
 SLACK_CONVERSATION=${SLACK_CONVERSATION:?set SLACK_CONVERSATION in config.env}
 TRUSTED=${AGENT_TRUSTED_DIR:-$HOME/projects/dotfiles/main}
-# One model call per tick per waiting question adds up over a night; a
-# question that waits an hour does not need sixty of them.
+# One model call per tick per waiting question adds up over a night.
 EVERY=${SLACK_POLL_EVERY:-300}
 
 id=$(jq -r '.id' "$req")
@@ -26,8 +23,7 @@ if [ -f "$stamp" ] && [ $(( now - $(cat "$stamp") )) -lt "$EVERY" ]; then
 fi
 echo "$now" > "$stamp"
 
-# The prompt travels on stdin: --allowedTools takes a list, and a prompt
-# passed as an argument after it is swallowed as one more tool name.
+# The prompt goes on stdin: --allowedTools is variadic and would swallow it.
 reply=$(cd "$TRUSTED" && printf %s \
   "Read the Slack thread whose parent message_ts is $ts in conversation $SLACK_CONVERSATION. If a reply to that parent exists, answer with the text of the most recent reply, verbatim, and nothing else — the thread may carry context posted by the machine itself, and only the last word counts. If there is no reply, answer exactly NONE. Never answer with the parent message itself." \
   | claude -p --allowedTools mcp__claude_ai_Slack__slack_read_thread \

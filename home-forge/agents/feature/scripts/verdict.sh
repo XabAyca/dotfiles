@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Merges the reviewers' verdicts and decides what the loop does next.
-# Exits non-zero when a verdict is missing or invalid, so the run stops
-# rather than carrying on with an assumption.
+# Merges the reviewers' verdicts and decides what the loop does next. Exits
+# non-zero on a missing or invalid verdict rather than assume one.
 set -euo pipefail
 
 run_id=${1:?missing run_id}
@@ -9,8 +8,6 @@ max=${2:?missing maximum attempts}
 
 state=".specify/state/${run_id}"
 
-# review.json is written on every pass. ui.json only exists once a UI review
-# has run, so a missing one is silence, not failure.
 read_status() {
   local file="${state}/$1.json" required=$2 status
   if [ ! -f "$file" ]; then
@@ -32,8 +29,7 @@ attempts=$(( $(cat "${state}/attempts" 2>/dev/null || echo 0) + 1 ))
 mkdir -p "$state"
 echo "$attempts" > "${state}/attempts"
 
-# The worst of the two decides: an interface finding is as blocking as a
-# correctness one, or the loop would learn to ignore it.
+# The worst of the two decides, or the loop would learn to ignore the UI.
 case "${review}/${ui}" in
   *NEEDS_HUMAN*|*BLOCKED*) verdict=ESCALATE ;;
   *NEEDS_FIX*)
@@ -42,6 +38,5 @@ case "${review}/${ui}" in
   *) echo "unexpected combination: ${review}/${ui}" >&2; exit 1 ;;
 esac
 
-# printf without a newline: the engine compares raw stdout, and "RETRY\n"
-# does not equal "RETRY".
+# No newline: the engine compares raw stdout against the literal.
 printf %s "$verdict"
