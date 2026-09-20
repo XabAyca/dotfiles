@@ -257,7 +257,9 @@ done_() {
     echo "$tree has uncommitted changes" >&2; exit 1; }
   # Last chance: what the runs cost goes away with the worktree otherwise.
   record run "$target"
-  git -C "$PROJECTS/${target%%/*}/main" worktree remove "$tree"
+  # Forced only because the check above already passed: git refuses a worktree
+  # holding anything at all, and what is left is the runner's own footprint.
+  git -C "$PROJECTS/${target%%/*}/main" worktree remove --force "$tree"
   echo "removed $tree"
 }
 
