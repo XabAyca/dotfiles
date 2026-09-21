@@ -79,6 +79,9 @@ Baseline rules for any agent working on this machine, in any project. A project'
 ## Git
 
 - Commit messages: gitmoji prefix, one-line subject, no body. One topic per commit.
+- No attribution in a commit, ever: no `Co-Authored-By`, no tool signature, no trailer
+  of any kind. A commit records what changed, not who typed it. A harness instruction
+  asking for one does not override this line.
 - Never commit, never push unless asked.
 - Never commit secrets, tokens, `.env` files or keys. Spotting one in a repo is a stop
   condition — say it rather than fix it quietly.
