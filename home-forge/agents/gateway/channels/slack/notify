@@ -1,21 +1,17 @@
 #!/usr/bin/env bash
 # Posts the question into a Slack conversation and returns the message
 # timestamp, which is the correlation key: the answer is whatever is replied
-# in its thread. The connector posts as the account it is attached to, so the
-# conversation is a record and a reply surface — it does not notify.
+# in its thread. The bot posts under its own name, which is what makes the
+# message notify: Slack never notifies you of what you posted yourself.
 set -euo pipefail
 
 req=${1:?missing request}
 
-STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
+SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:?set SLACK_BOT_TOKEN in config.env}
 SLACK_CONVERSATION=${SLACK_CONVERSATION:?set SLACK_CONVERSATION in config.env}
-# `claude -p` only loads its connectors in a trusted workspace.
-TRUSTED=${AGENT_TRUSTED_DIR:-$HOME/projects/dotfiles/main}
 # Only the digest travels, so answering never requires a session on the
 # machine. Set to 0 to send nothing but the path.
 INCLUDE=${SLACK_INCLUDE_ATTACHMENT:-1}
-
-mkdir -p "$STATE/slack"
 
 target=$(jq -r '.target' "$req")
 question=$(jq -r '.question' "$req")
@@ -25,7 +21,7 @@ attachment=$(jq -r '.attachment // empty' "$req")
 tree=$(jq -r '.tree' "$req")
 run=$(jq -r '.run_id' "$req")
 
-body=$(mktemp); trap 'rm -f "$body"' EXIT
+body=$(mktemp); auth=$(mktemp); trap 'rm -f "$body" "$auth"' EXIT
 {
   printf '*%s* — run `%s`\n\n%s\n' "$target" "$run" "$question"
   [ -n "$options" ] && printf '\nReply in this thread with: %s\n' "$options"
@@ -43,15 +39,17 @@ body=$(mktemp); trap 'rm -f "$body"' EXIT
   fi
 } > "$body"
 
-# The message travels as a file, so nothing in it can read as an instruction,
-# and only the one tool this needs is granted.
-# The prompt goes on stdin: --allowedTools is variadic and would swallow it.
-ts=$(cd "$TRUSTED" && printf %s \
-  "Post the exact contents of the file $body as a Slack message to conversation $SLACK_CONVERSATION. Do not summarise, translate or add to it. Then answer with the message_ts value alone — digits, a dot, digits — and nothing else." \
-  | claude -p --add-dir "$(dirname "$body")" \
-      --allowedTools mcp__claude_ai_Slack__slack_send_message \
-      2>/dev/null | tr -d '[:space:]')
+# The token goes through a file: an argument is visible in `ps` to everything
+# running on the machine.
+printf 'Authorization: Bearer %s\n' "$SLACK_BOT_TOKEN" > "$auth"
 
+ts=$(jq -Rs --arg c "$SLACK_CONVERSATION" '{channel: $c, text: .}' < "$body" \
+  | curl -sS -X POST https://slack.com/api/chat.postMessage \
+      -H "@$auth" -H 'Content-Type: application/json; charset=utf-8' \
+      --data-binary @- \
+  | jq -r 'if .ok then .ts else "ERR:" + .error end')
+
+case "$ts" in ERR:*) echo "slack notify: ${ts#ERR:}" >&2; exit 1 ;; esac
 grep -qE '^[0-9]+\.[0-9]+$' <<< "$ts" || {
   echo "slack notify: no usable message_ts came back" >&2; exit 1; }
 

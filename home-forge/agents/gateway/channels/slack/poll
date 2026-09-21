@@ -5,29 +5,22 @@ set -euo pipefail
 
 req=${1:?missing request}
 
-STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
+SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:?set SLACK_BOT_TOKEN in config.env}
 SLACK_CONVERSATION=${SLACK_CONVERSATION:?set SLACK_CONVERSATION in config.env}
-TRUSTED=${AGENT_TRUSTED_DIR:-$HOME/projects/dotfiles/main}
-# One model call per tick per waiting question adds up over a night.
-EVERY=${SLACK_POLL_EVERY:-300}
-
-id=$(jq -r '.id' "$req")
 ts=$(jq -r '.handle // empty' "$req")
 [ -n "$ts" ] || exit 0
 
-mkdir -p "$STATE/slack"
-stamp="$STATE/slack/$id.lastpoll"
-now=$(date +%s)
-if [ -f "$stamp" ] && [ $(( now - $(cat "$stamp") )) -lt "$EVERY" ]; then
-  exit 0
-fi
-echo "$now" > "$stamp"
+auth=$(mktemp); trap 'rm -f "$auth"' EXIT
+printf 'Authorization: Bearer %s\n' "$SLACK_BOT_TOKEN" > "$auth"
 
-# The prompt goes on stdin: --allowedTools is variadic and would swallow it.
-reply=$(cd "$TRUSTED" && printf %s \
-  "Read the Slack thread whose parent message_ts is $ts in conversation $SLACK_CONVERSATION. If a reply to that parent exists, answer with the text of the most recent reply, verbatim, and nothing else — the thread may carry context posted by the machine itself, and only the last word counts. If there is no reply, answer exactly NONE. Never answer with the parent message itself." \
-  | claude -p --allowedTools mcp__claude_ai_Slack__slack_read_thread \
-      2>/dev/null)
+reply=$(curl -sS -G https://slack.com/api/conversations.replies -H "@$auth" \
+  --data-urlencode "channel=$SLACK_CONVERSATION" --data-urlencode "ts=$ts" \
+  | jq -r --arg parent "$ts" '
+      if .ok then [ .messages[] | select(.ts != $parent) ]
+                  | (last // {}) | .text // "NONE"
+      else "ERR:" + .error end')
+
+case "$reply" in ERR:*) echo "slack poll: ${reply#ERR:}" >&2; exit 0 ;; esac
 
 # Whitespace survives: an answer can be a sentence and not just a word.
 word=$(printf %s "$reply" | tr -d '[:space:]')
