@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.7.0"
+  version: "0.8.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -29,6 +29,10 @@ inputs:
   # Every gate carries a verdict_input: without one, a gate can only be
   # answered at a real terminal, which rules out the supervisor and Slack.
   clarify_verdict:
+    type: string
+    enum: ["", approve, reject]
+    default: ""
+  plan_verdict:
     type: string
     enum: ["", approve, reject]
     default: ""
@@ -97,6 +101,29 @@ steps:
     integration: "{{ inputs.integration }}"
     input:
       args: "{{ inputs.spec }}"
+
+  # The gate can only show a path it knows at write time, and the feature
+  # directory is only named once the run has one.
+  - id: stage-plan
+    type: shell
+    run: 'mkdir -p .specify/state/{{ context.run_id }} && cp "$(jq -re .feature_directory .specify/feature.json)/plan.md" .specify/state/{{ context.run_id }}/plan.md'
+
+  # The last place a wrong direction is cheap: tasks and implement both build
+  # on whatever this plan says.
+  - id: plan-gate
+    type: gate
+    message: "The plan is below — nothing has been coded yet. Reply with corrections in plain text and I revise the plan, then carry on. Reply `approve` to build exactly this. Reply `reject` and the run stops here."
+    show_file: ".specify/state/{{ context.run_id }}/plan.md"
+    answer_file: plan-answer.md
+    options: [approve, reject]
+    on_reject: abort
+    verdict_input: plan_verdict
+
+  - id: apply-plan-answer
+    type: prompt
+    integration: "{{ inputs.integration }}"
+    timeout: 1800
+    prompt: "If .specify/state/{{ context.run_id }}/plan-answer.md exists, read it and revise the plan accordingly, and the spec too where the corrections reach it. If it does not exist, do nothing and say so. Write no code."
 
   - id: design-ui
     type: prompt
