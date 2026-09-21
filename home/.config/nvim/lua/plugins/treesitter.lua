@@ -1,5 +1,7 @@
 return {
   "nvim-treesitter/nvim-treesitter",
+  -- main is Neovim 0.12 only; master is the branch that supports 0.11.
+  branch = "master",
   build = ":TSUpdate",
   config = function()
     local treesitter = require("nvim-treesitter.configs")
