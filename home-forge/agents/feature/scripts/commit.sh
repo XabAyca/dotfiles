@@ -5,7 +5,7 @@ set -euo pipefail
 . "$(dirname "$(readlink -f "$0")")/runner-paths.sh"
 
 feature_dir=$(jq -re '.feature_directory' .specify/feature.json)
-title=$(sed -n 's/^# Feature Specification: //p' "${feature_dir}/spec.md" | head -1)
+title=$(sed -n '/^# /{s/^# [^:]*:[[:space:]]*//p;q}' "${feature_dir}/spec.md")
 [ -n "$title" ] || { echo "no title found in ${feature_dir}/spec.md" >&2; exit 1; }
 
 git add -A

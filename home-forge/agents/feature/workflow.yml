@@ -50,13 +50,14 @@ inputs:
     default: ""
 
 steps:
-  # Artefacts are written in English whatever language the description uses,
-  # so branch names, commit subjects and PR titles need no translation later.
+  # The spec follows the language of the constitution, since that is what the
+  # analysis and the review measure it against. Everything a machine names —
+  # feature, worktree, branch, commit subject, PR title — stays English.
   - id: specify
     command: speckit.specify
     integration: "{{ inputs.integration }}"
     input:
-      args: "{{ inputs.spec }}\n\nWrite the specification and every artefact in English."
+      args: "{{ inputs.spec }}\n\nWrite the specification in the language of .specify/memory/constitution.md, English if there is none. The feature name, the worktree, the branch, the commit subjects and the PR title stay in English."
 
   # Spec Kit asks its own targeted questions and writes the answers back into
   # the spec. Only what it could not settle on its own reaches a human.

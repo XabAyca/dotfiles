@@ -7,7 +7,7 @@ run_id=${1:?missing run_id}
 state=".specify/state/${run_id}"
 
 feature_dir=$(jq -re '.feature_directory' .specify/feature.json)
-title=$(sed -n 's/^# Feature Specification: //p' "${feature_dir}/spec.md" | head -1)
+title=$(sed -n '/^# /{s/^# [^:]*:[[:space:]]*//p;q}' "${feature_dir}/spec.md")
 base=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
 
 # Which workflow actually ran: the source, the worktree copy and the frozen
