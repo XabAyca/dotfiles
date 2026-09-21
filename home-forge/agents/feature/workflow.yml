@@ -81,7 +81,7 @@ steps:
     then:
       - id: clarify-gate
         type: gate
-        message: "The spec still has open questions. Reply with the answers in plain text, or approve to let the agent settle them on its own, or reject to stop."
+        message: "The spec still has open questions — they are listed below. Reply with the answers in plain text and they go into the spec. Reply `approve` and I settle each one myself with the most defensible reading of the spec, marking every choice I make — you will not be asked again. Reply `reject` and the run stops here."
         show_file: ".specify/state/{{ context.run_id }}/questions.md"
         # Not an engine key: it ignores this one and keeps it in the copy it
         # freezes, which is where the gateway reads it.
@@ -159,7 +159,7 @@ steps:
       BLOCKING:
         - id: analyze-gate
           type: gate
-          message: "The analysis found a constitution breach or an uncovered requirement. Settle it before any code is written."
+          message: "The analysis found a constitution breach or a requirement nothing covers, listed below. No code has been written yet. Reply `approve` and I correct the spec, the plan or the tasks myself until the finding no longer holds. Reply `reject` and the run stops here. Only these two words are read at this gate — a written answer is refused."
           show_file: ".specify/state/{{ context.run_id }}/analyze.json"
           options: [approve, reject]
           on_reject: abort
@@ -223,7 +223,7 @@ steps:
     then:
       - id: converge-gate
         type: gate
-        message: "Convergence is still appending work after the last round. Approve to review and ship what exists, or reject to stop and replan."
+        message: "Convergence is still adding work after the last round — what it added is below. Reply `approve` to review and ship what exists now. Reply `reject` to stop and replan. Only these two words are read at this gate — a written answer is refused."
         show_file: ".specify/state/{{ context.run_id }}/converge.md"
         options: [approve, reject]
         on_reject: abort
@@ -267,7 +267,7 @@ steps:
     then:
       - id: review-gate
         type: gate
-        message: "The review loop did not converge. Approve to ship as is, reject to stop, or reply with instructions — which count as approve, so the branch ships once they are applied."
+        message: "The review loop ran out of attempts and the problems below still stand. Reply with instructions in plain text and I apply them, then the branch ships. Reply `approve` to ship as it stands. Reply `reject` and the run stops here."
         show_file: ".specify/state/{{ context.run_id }}/verdict.md"
         answer_file: human-answer.md
         options: [approve, reject]
@@ -296,7 +296,7 @@ steps:
 
       - id: ship-gate
         type: gate
-        message: "Push the branch and open a draft PR? Read the record below first."
+        message: "Everything is committed on the branch; the record is below. Reply `push` to push it and open a draft PR. Reply `reject` to leave it on the machine. Only these two words are read at this gate — a written answer is refused."
         show_file: ".specify/state/{{ context.run_id }}/ship.md"
         options: [push, reject]
         # skip only skips the gate itself: the rejection must be carried over
