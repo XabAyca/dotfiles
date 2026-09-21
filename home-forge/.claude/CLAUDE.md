@@ -89,6 +89,8 @@ here only where it says so in as many words. Source of this file:
 ## Git
 
 - Commit messages: gitmoji prefix, one-line subject, no body. One topic per commit.
+- A commit is atomic: it stands on its own, carries the tests of what it changes,
+  and can be reverted alone without leaving the tree broken.
 - No attribution in a commit, ever: no `Co-Authored-By`, no tool signature, no trailer
   of any kind. A commit records what changed, not who typed it. A harness instruction
   asking for one does not override this line.
