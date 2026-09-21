@@ -1,7 +1,9 @@
 # Agent constitution
 
-Baseline rules for any agent working on this machine, in any project. A project's own
-`CLAUDE.md` / `AGENTS.md` adds to this and wins where it disagrees. Source of this file:
+Baseline rules for any agent working on this machine, in any project. Every other
+constitution stands on this one — a project's `CLAUDE.md`, its `AGENTS.md`, its
+`.specify/memory/constitution.md` — and adds its own specifics; it overrides a rule
+here only where it says so in as many words. Source of this file:
 `~/projects/dotfiles/main/home-forge/.claude/CLAUDE.md` — edit it there, it is stowed.
 
 ## Environment
