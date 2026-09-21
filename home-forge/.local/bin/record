@@ -99,7 +99,7 @@ record_run() {
      --slurpfile state "$state_file" \
      --slurpfile review <(cat "$feature_state/review.json" 2>/dev/null || echo null) \
      --slurpfile ui     <(cat "$feature_state/ui.json"     2>/dev/null || echo null) \
-     --arg answers "$(cat "$feature_state/human-answer.md" 2>/dev/null || true)" \
+     --arg answers "$(cat "$feature_state"/*-answer.md 2>/dev/null || true)" \
      "$program" < <(jq -s '.' "$run_dir/log.jsonl") > "$tmp"
   mv "$tmp" "$out"
   echo "recorded  $target  $run_id"

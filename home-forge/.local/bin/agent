@@ -175,11 +175,14 @@ retry() {
     exit 1; }
   idle_or_die "$tree"
 
-  # The verdicts go with the rewind, so the next pass judges what now stands.
+  # The verdicts go with the rewind, so the next pass judges what now stands,
+  # and the written answers with them: a gate reached again reads its own file
+  # before anyone has replied, and would apply the last run's answer in silence.
   rm -f "$tree/.specify/state/$run_id/review.json" \
         "$tree/.specify/state/$run_id/ui.json" \
         "$tree/.specify/state/$run_id/attempts" \
-        "$tree/.specify/state/$run_id/ship.md"
+        "$tree/.specify/state/$run_id/ship.md" \
+        "$tree/.specify/state/$run_id"/*-answer.md
 
   # A verdict_input holds its answer for the whole run and decides its gate
   # without asking again, so a rewind that kept them would replay old

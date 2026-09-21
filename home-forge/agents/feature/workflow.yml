@@ -84,8 +84,9 @@ steps:
         message: "The spec still has open questions — they are listed below. Reply with the answers in plain text and they go into the spec. Reply `approve` and I settle each one myself with the most defensible reading of the spec, marking every choice I make — you will not be asked again. Reply `reject` and the run stops here."
         show_file: ".specify/state/{{ context.run_id }}/questions.md"
         # Not an engine key: it ignores this one and keeps it in the copy it
-        # freezes, which is where the gateway reads it.
-        answer_file: human-answer.md
+        # freezes, which is where the gateway reads it. One file per gate, or
+        # the next gate reads the answer written for the last one.
+        answer_file: clarify-answer.md
         options: [approve, reject]
         on_reject: abort
         verdict_input: clarify_verdict
@@ -94,7 +95,7 @@ steps:
         type: prompt
         integration: "{{ inputs.integration }}"
         timeout: 1800
-        prompt: "If .specify/state/{{ context.run_id }}/human-answer.md exists, read it and resolve every remaining [NEEDS CLARIFICATION] marker in the spec accordingly. If it does not, resolve each marker with the most defensible reading of the spec and mark every choice you made. Either way, revise any assumption the answers invalidate and update the checklist. Write no code."
+        prompt: "If .specify/state/{{ context.run_id }}/clarify-answer.md exists, read it and resolve every remaining [NEEDS CLARIFICATION] marker in the spec accordingly. If it does not, resolve each marker with the most defensible reading of the spec and mark every choice you made. Either way, revise any assumption the answers invalidate and update the checklist. Write no code."
 
   - id: plan
     command: speckit.plan
@@ -169,7 +170,7 @@ steps:
           type: prompt
           integration: "{{ inputs.integration }}"
           timeout: 1800
-          prompt: "Read .specify/state/{{ context.run_id }}/analyze.json and, if present, human-answer.md. Correct the spec, the plan or the tasks so the critical findings no longer hold. Write no code."
+          prompt: "Read .specify/state/{{ context.run_id }}/analyze.json. Correct the spec, the plan or the tasks so the critical findings no longer hold. Write no code."
 
       CONCERNS:
         - id: apply-concerns
@@ -269,7 +270,7 @@ steps:
         type: gate
         message: "The review loop ran out of attempts and the problems below still stand. Reply with instructions in plain text and I apply them, then the branch ships. Reply `approve` to ship as it stands. Reply `reject` and the run stops here."
         show_file: ".specify/state/{{ context.run_id }}/verdict.md"
-        answer_file: human-answer.md
+        answer_file: review-answer.md
         options: [approve, reject]
         on_reject: abort
         verdict_input: review_verdict
@@ -278,7 +279,7 @@ steps:
         type: prompt
         integration: "{{ inputs.integration }}"
         timeout: 1800
-        prompt: "If .specify/state/{{ context.run_id }}/human-answer.md exists, read it and apply the decision it states. If it does not, do nothing and say so."
+        prompt: "If .specify/state/{{ context.run_id }}/review-answer.md exists, read it and apply the decision it states. If it does not, do nothing and say so."
 
   # review_verdict is interpolated into a shell command, which is only safe
   # because its enum confines it to three known values.
