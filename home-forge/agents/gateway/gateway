@@ -51,9 +51,11 @@ channel() {
   "$exe" "$@"
 }
 
-# A run is identified by where it lives, which run it is, and which step is
-# waiting. All three are needed to answer, and none of them is invented.
-request_id() { printf '%s__%s__%s' "${1//\//_}" "$2" "$3"; }
+# A run is identified by where it lives, which run it is, which step is
+# waiting, and when the engine dated that pause. The instant matters: a loop
+# can bring the same run back to the same gate, and each pause is its own
+# question.
+request_id() { printf '%s__%s__%s__%s' "${1//\//_}" "$2" "$3" "${4//[^0-9]/}"; }
 
 # The gate's step result says what was asked; only the workflow says which
 # input carries the answer, and where a written one is left.
@@ -70,10 +72,11 @@ gate_field() {
 announce() {
   local run_dir=$1 target=$2 project=$3
   local state_file="$run_dir/state.json" wf="$run_dir/workflow.yml"
-  local run_id status step
+  local run_id status step paused_at
   run_id=$(jq -r '.run_id' "$state_file")
   status=$(jq -r '.status' "$state_file")
   step=$(jq -r '.current_step_id // "-"' "$state_file")
+  paused_at=$(jq -r '.updated_at' "$state_file")
 
   case "$status" in paused|failed) ;; *) return 0 ;; esac
   # A rewind writes "failed" a moment before the engine restarts, so a failure
@@ -81,7 +84,7 @@ announce() {
   [ "$status" = failed ] \
     && [ $(( $(date +%s) - $(stat -c %Y "$state_file") )) -lt "$TICK" ] && return 0
 
-  local id; id=$(request_id "$target" "$run_id" "$step")
+  local id; id=$(request_id "$target" "$run_id" "$step" "$paused_at")
   [ -e "$STATE/requests/$id.json" ] && return 0
   [ -e "$STATE/done/$id.json" ] && return 0
 
