@@ -39,6 +39,7 @@ git push -u origin HEAD
 open=$(gh pr list --head "$(git branch --show-current)" --state open --json url -q '.[].url')
 if [ -n "$open" ]; then
   echo "pushed to the open pull request: $open"
+  gh pr comment --body-file "$body"
 else
   gh pr create --draft --base "$base" --title "$title" --body-file "$body"
 fi
