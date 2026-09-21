@@ -78,6 +78,14 @@ here only where it says so in as many words. Source of this file:
   of code — the opening header aside — a file is over-commented.
 - Leave the place runnable: if something is half-done, name it explicitly.
 
+## Tests
+
+- Anything that adds logic ships with its tests: unit for what it computes,
+  functional for the path someone actually walks. Config and one-line edits are
+  not logic; everything else is.
+- A test worth writing to check the work is worth keeping to catch the
+  regression. It goes in the repo, next to what it tests, never in `/tmp`.
+
 ## Git
 
 - Commit messages: gitmoji prefix, one-line subject, no body. One topic per commit.
