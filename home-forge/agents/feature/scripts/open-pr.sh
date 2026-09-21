@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Pushes the branch and opens a draft pull request. Claude is never allowed
-# to push; the workflow is, and only past the ship gate.
+# Pushes the branch, and opens a draft pull request unless it already has one.
+# Claude is never allowed to push; the workflow is, and only past the ship gate.
 set -euo pipefail
 
 run_id=${1:?missing run_id}
@@ -34,4 +34,11 @@ body="${state}/pr-body.md"
 } > "$body"
 
 git push -u origin HEAD
-gh pr create --draft --base "$base" --title "$title" --body-file "$body"
+# A rewound run ships the same branch twice: the second time the push is the
+# whole delivery, and gh refuses to open a pull request that stands already.
+open=$(gh pr list --head "$(git branch --show-current)" --state open --json url -q '.[].url')
+if [ -n "$open" ]; then
+  echo "pushed to the open pull request: $open"
+else
+  gh pr create --draft --base "$base" --title "$title" --body-file "$body"
+fi
