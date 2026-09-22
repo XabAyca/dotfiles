@@ -26,7 +26,7 @@ step=$(jq -r '.step' "$req")
 
 title=$(head -1 <<< "$message")
 body=$(tail -n +2 <<< "$message")
-[ "$kind" = failure ] && icon=🚨 || icon=❓
+case "$kind" in failure) icon=🚨 ;; done) icon=✅ ;; *) icon=❓ ;; esac
 
 payload=$(mktemp); auth=$(mktemp); trap 'rm -f "$payload" "$auth"' EXIT
 {

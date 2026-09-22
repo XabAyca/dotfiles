@@ -80,7 +80,7 @@ announce() {
   step=$(jq -r '.current_step_id // "-"' "$state_file")
   paused_at=$(jq -r '.updated_at' "$state_file")
 
-  case "$status" in paused|failed) ;; *) return 0 ;; esac
+  case "$status" in paused|failed|completed) ;; *) return 0 ;; esac
   # A rewind writes "failed" a moment before the engine restarts, so a failure
   # is only worth announcing once it has survived a tick.
   [ "$status" = failed ] \
@@ -92,7 +92,8 @@ announce() {
 
   local tree="$PROJECTS/$target" input="" answer_file="" req
   req=$(mktemp)
-  if [ "$status" = paused ]; then
+  case "$status" in
+  paused)
     input=$(gate_field "$wf" "$step" verdict_input)
     answer_file=$(gate_field "$wf" "$step" answer_file)
     jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
@@ -105,7 +106,8 @@ announce() {
         question: ($s[0].step_results[$step].output.message // "?"),
         options: ($s[0].step_results[$step].output.options // []),
         attachment: ($s[0].step_results[$step].output.show_file // null)}' > "$req"
-  else
+    ;;
+  failed)
     jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
           --arg run "$run_id" --arg step "$step" --arg tree "$tree" \
           --slurpfile s "$state_file" \
@@ -114,7 +116,23 @@ announce() {
         question: ("Run en échec\n\nLe run s'\''est arrêté à l'\''étape `" + $step + "` :\n\n> "
                    + ($s[0].error // "aucune raison enregistrée")),
         options: [], attachment: null}' > "$req"
-  fi
+    ;;
+  # A run that reaches the end says so once, with whatever the push left on
+  # stdout: nothing else on the machine ever mentions the pull request again.
+  completed)
+    jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
+          --arg run "$run_id" --arg step "$step" --arg tree "$tree" \
+          --slurpfile s "$state_file" \
+      '{id: $id, kind: "done", target: $target, project: $project,
+        run_id: $run, step: $step, input: "", tree: $tree, answer_file: "",
+        question: ("Run terminé\n\n"
+                   + (($s[0].step_results["do-open-pr"].output.stdout // "")
+                      | sub("\\s+$"; "")
+                      | if . == "" then "Rien n'\''est parti : la branche est restée sur la machine."
+                        else . end)),
+        options: [], attachment: null}' > "$req"
+    ;;
+  esac
 
   local handle
   handle=$(channel notify "$req") || { rm -f "$req"; echo "notify failed for $id" >&2; return 0; }
@@ -128,8 +146,9 @@ apply() {
   local kind answer
   kind=$(jq -r '.kind' "$req")
 
-  # A failure has nothing to answer: it was said once, and that is all.
-  [ "$kind" = failure ] && { mv "$req" "$STATE/done/"; return 0; }
+  # Neither a failure nor a completion has anything to answer: each was said
+  # once, and that is all.
+  case "$kind" in failure|done) mv "$req" "$STATE/done/"; return 0 ;; esac
 
   answer=$(channel poll "$req" || true)
   [ -n "$answer" ] || return 0

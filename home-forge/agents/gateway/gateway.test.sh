@@ -75,5 +75,23 @@ if bash "$HERE/gateway" reply proj/branch r1 push 2>"$T/err"; then
 fi
 grep -qF "no question outstanding" "$T/err" || say "reply was silent about the missing question"
 
+# A run that reaches the end is announced once, through the channel that needs
+# no network, and has nothing left to answer.
+export AGENT_GATEWAY_CHANNEL=file AGENT_RECORD_STATE="$T/record"
+rm -f "$T/state/requests"/*.json "$T/state/done"/*.json
+jq -n '{run_id: "r1", status: "completed", current_step_id: "do-open-pr",
+        updated_at: "2026-09-22T07:00:00+00:00",
+        step_results: {"do-open-pr": {output: {stdout: "https://example.test/pr/1\n"}}}}' \
+  > "$tree/.specify/workflows/runs/r1/state.json"
+bash "$HERE/gateway" scan >/dev/null 2>&1
+grep -qF "https://example.test/pr/1" "$T/state/inbox.md" \
+  || say "the finished run was not announced"
+ls "$T/state/done"/*.json >/dev/null 2>&1 \
+  || say "the announcement stayed outstanding with nothing to answer"
+
+: > "$T/state/inbox.md"
+bash "$HERE/gateway" scan >/dev/null 2>&1
+[ -s "$T/state/inbox.md" ] && say "the finished run was announced a second time"
+
 [ "$fail" = 0 ] && echo "ok"
 exit "$fail"
