@@ -136,6 +136,12 @@ Step 4 is the only one performed on the client machine, not the server.
     Open a **new** SSH connection and confirm it reaches the prompt before closing the
     others. Roll back from a live session with `chsh -s /bin/bash`.
 
+Tests. The scripts of `home-forge` carry their own — no framework, no network:
+
+```shell
+find home-forge -name '*.test.sh' | while read -r t; do echo "== $t"; bash "$t" || break; done
+```
+
 Optional:
 
 - `zdiff3` instead of `diff3` for `merge.conflictstyle`, and `syntax-theme = gruvbox-dark`
