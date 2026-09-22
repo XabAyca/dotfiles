@@ -6,7 +6,12 @@
       "Bash(cargo check:*)",
       "Bash(cargo clippy:*)",
       "Bash(cargo fmt:*)",
-      "Bash(cargo audit:*)"
+      "Bash(cargo audit:*)",
+      "Bash(tmux show *)",
+      "Bash(tmux ls)",
+      "Bash(mise current)",
+      "Bash(mise settings --all)",
+      "mcp__claude_ai_Slack__slack_read_thread"
     ],
     "deny": [
       "Bash(git reset --hard:*)",
