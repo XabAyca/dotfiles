@@ -5,6 +5,7 @@ set -euo pipefail
 
 AGENTS=$HOME/agents/feature
 PROJECTS=$HOME/projects
+GATEWAY=$HOME/agents/gateway/gateway
 
 . "$AGENTS/scripts/runner-paths.sh"
 
@@ -17,6 +18,8 @@ usage:
   agent retry <project>/<branch> <run_id> [step]   default: review-loop
   agent stop <project>/<branch>
   agent list
+  agent menu                                      pick a run, then what to do with it
+  agent preview <project>/<branch> <run_id>        what the menu shows in its pane
   agent done <project>/<branch>
 USAGE
   exit 1
@@ -245,7 +248,9 @@ stop() {
   echo "stopped   $target"
 }
 
-list() {
+# One tab-separated row per run: target, run, status, step, idle. The menu
+# reads the same rows as the listing, so both always say the same thing.
+rows() {
   local tree
   for tree in "$PROJECTS"/*/*/; do
     [ -d "$tree/.specify/workflows/runs" ] || continue
@@ -256,11 +261,76 @@ list() {
       # `claude -p` prints nothing until its step finishes.
       jq -r --arg t "$(basename "$(dirname "$tree")")/$(basename "$tree")" \
          --argjson now "$(date +%s)" \
-        '"\($t)  \(.run_id)  \(.status)  \(.current_step_id // "-")  " +
-         (($now - (.updated_at | sub("\\.[0-9]+"; "") | sub("\\+00:00"; "Z") | fromdateiso8601)) / 60
-          | floor | tostring) + " min"' "$f"
+        '[$t, .run_id, .status, (.current_step_id // "-"),
+          ((($now - (.updated_at | sub("\\.[0-9]+"; "") | sub("\\+00:00"; "Z") | fromdateiso8601)) / 60
+            | floor | tostring) + " min")] | @tsv' "$f"
     done
   done
+}
+
+list() { rows | column -t -s "$(printf '\t')"; }
+
+# What the menu shows beside the list: where the run stands, the question it is
+# waiting on, and the tail of its pane — the only place a working step speaks.
+preview() {
+  local target=${1:?missing project/branch} run=${2:?missing run_id}
+  local state="$PROJECTS/$target/.specify/workflows/runs/$run/state.json"
+  [ -f "$state" ] || { echo "no such run"; return 0; }
+  jq -r '"status  " + .status,
+         "step    " + (.current_step_id // "-"),
+         "since   " + .updated_at,
+         "",
+         (.error // empty),
+         (.step_results[.current_step_id].output.message // empty)' "$state"
+  echo
+  tmux capture-pane -pt "$target" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -20
+}
+
+# Pick a run, then what to do with it. The actions are the subcommands above,
+# offered only where the status allows them — an answer to a run that is not
+# waiting, or a worktree removed under a live engine, are the two mistakes
+# this is here to make impossible.
+menu() {
+  command -v fzf >/dev/null || { echo "agent menu needs fzf" >&2; exit 1; }
+  local all sel target run status step
+  all=$(rows)
+  [ -n "$all" ] || { echo "no run on this machine"; return 0; }
+
+  sel=$(printf '%s\n' "$all" | column -t -s "$(printf '\t')" \
+    | fzf --prompt='< runs > ' --height=60% --reverse --no-sort \
+          --preview "$0 preview {1} {2}" --preview-window=right,55%) || return 0
+  [ -n "$sel" ] || return 0
+  read -r target run status step _ <<< "$sel"
+
+  local actions
+  case $status in
+    paused)  actions=$'answer approve\nanswer reject\nanswer in plain text\nattach\nstop' ;;
+    running) actions=$'attach\nstop' ;;
+    failed)  actions=$'resume\nretry\nattach\nstop' ;;
+    *)       actions=$'attach\nrecord\ndone' ;;
+  esac
+
+  local action
+  action=$(printf '%s\n' "$actions" \
+    | fzf --prompt="< $target  $step > " --height=40% --reverse --no-sort) || return 0
+
+  case $action in
+    'answer approve')       "$GATEWAY" reply "$target" "$run" approve ;;
+    'answer reject')        "$GATEWAY" reply "$target" "$run" reject ;;
+    'answer in plain text')
+      local text
+      read -r -p 'answer: ' text
+      if [ -n "$text" ]; then "$GATEWAY" reply "$target" "$run" "$text"; fi ;;
+    attach)
+      # Nesting a session inside another is refused; from a pane, move to it.
+      if [ -n "${TMUX:-}" ]; then tmux switch-client -t "$target"
+      else exec tmux new-session -A -s "$target" -c "$PROJECTS/$target"; fi ;;
+    stop)   stop "$target" ;;
+    resume) resume "$target" "$run" ;;
+    retry)  retry "$target" "$run" ;;
+    record) record show "$run" ;;
+    done)   done_ "$target" ;;
+  esac
 }
 
 done_() {
@@ -291,6 +361,8 @@ case ${1:-} in
   stop)   shift; stop "$@" ;;
   answer) shift; answer "$@" ;;
   list)   shift; list ;;
+  menu)   shift; menu ;;
+  preview) shift; preview "$@" ;;
   done)   shift; done_ "$@" ;;
   *)      usage ;;
 esac
