@@ -140,5 +140,3 @@ Optional:
 
 - `zdiff3` instead of `diff3` for `merge.conflictstyle`, and `syntax-theme = gruvbox-dark`
   under `[delta]` — check the name against `delta --list-syntax-themes` first.
-- Version managers `rbenv` / `pyenv` / `nodenv`: only if you need Ruby or Python on the
-  server; the lazy-load stubs in `.zshrc` are no-ops otherwise.
