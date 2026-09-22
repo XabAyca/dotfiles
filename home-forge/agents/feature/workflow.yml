@@ -79,9 +79,12 @@ steps:
     type: if
     condition: "{{ steps.scan-clarify.output.stdout == 'BLOCKED' }}"
     then:
+      # A gate speaks to a human, so it speaks French — and in one shape: the
+      # first line is the title the channel puts in its header, the rest is
+      # the body, the options it offers included.
       - id: clarify-gate
         type: gate
-        message: "The spec still has open questions — they are listed below. Reply with the answers in plain text and they go into the spec. Reply `approve` and I settle each one myself with the most defensible reading of the spec, marking every choice I make — you will not be asked again. Reply `reject` and the run stops here."
+        message: "Questions ouvertes sur la spec\n\nLa spec garde des points non tranchés, listés ci-dessous.\n\n*Répondre dans ce fil :*\n• `approve` — je tranche chaque point moi-même, au sens le plus défendable de la spec, et je marque chaque choix ; tu ne seras pas redemandé\n• `reject` — le run s'arrête ici\n• _du texte libre_ — tes réponses partent dans la spec telles quelles"
         show_file: ".specify/state/{{ context.run_id }}/questions.md"
         # Not an engine key: it ignores this one and keeps it in the copy it
         # freezes, which is where the gateway reads it. One file per gate, or
@@ -113,7 +116,7 @@ steps:
   # on whatever this plan says.
   - id: plan-gate
     type: gate
-    message: "The plan is below — nothing has been coded yet. Reply with corrections in plain text and I revise the plan, then carry on. Reply `approve` to build exactly this. Reply `reject` and the run stops here."
+    message: "Plan à valider\n\nLe plan est ci-dessous, rien n'a encore été codé.\n\n*Répondre dans ce fil :*\n• `approve` — je construis exactement ça\n• `reject` — le run s'arrête ici\n• _du texte libre_ — je corrige le plan, puis je continue"
     show_file: ".specify/state/{{ context.run_id }}/plan.md"
     answer_file: plan-answer.md
     options: [approve, reject]
@@ -160,7 +163,7 @@ steps:
       BLOCKING:
         - id: analyze-gate
           type: gate
-          message: "The analysis found a constitution breach or a requirement nothing covers, listed below. No code has been written yet. Reply `approve` and I correct the spec, the plan or the tasks myself until the finding no longer holds. Reply `reject` and the run stops here. Only these two words are read at this gate — a written answer is refused."
+          message: "Analyse bloquante\n\nL'analyse a trouvé une violation de la constitution, ou une exigence que rien ne couvre — c'est ci-dessous. Aucun code n'a encore été écrit.\n\n*Répondre dans ce fil :*\n• `approve` — je corrige la spec, le plan ou les tâches jusqu'à ce que le constat tombe\n• `reject` — le run s'arrête ici\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
           show_file: ".specify/state/{{ context.run_id }}/analyze.json"
           options: [approve, reject]
           on_reject: abort
@@ -224,7 +227,7 @@ steps:
     then:
       - id: converge-gate
         type: gate
-        message: "Convergence is still adding work after the last round — what it added is below. Reply `approve` to review and ship what exists now. Reply `reject` to stop and replan. Only these two words are read at this gate — a written answer is refused."
+        message: "Convergence sans fin\n\nLa convergence ajoute encore du travail après le dernier tour ; ce qu'elle a ajouté est ci-dessous.\n\n*Répondre dans ce fil :*\n• `approve` — on review et on livre ce qui existe aujourd'hui\n• `reject` — on s'arrête et on replanifie\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
         show_file: ".specify/state/{{ context.run_id }}/converge.md"
         options: [approve, reject]
         on_reject: abort
@@ -268,7 +271,7 @@ steps:
     then:
       - id: review-gate
         type: gate
-        message: "The review loop ran out of attempts and the problems below still stand. Reply with instructions in plain text and I apply them, then the branch ships. Reply `approve` to ship as it stands. Reply `reject` and the run stops here."
+        message: "Review épuisée\n\nLa boucle de review n'a plus de tentatives et les problèmes ci-dessous tiennent toujours.\n\n*Répondre dans ce fil :*\n• `approve` — on livre en l'état\n• `reject` — le run s'arrête ici\n• _du texte libre_ — j'applique tes instructions, puis la branche part"
         show_file: ".specify/state/{{ context.run_id }}/verdict.md"
         answer_file: review-answer.md
         options: [approve, reject]
@@ -297,7 +300,7 @@ steps:
 
       - id: ship-gate
         type: gate
-        message: "Everything is committed on the branch; the record is below. Reply `push` to push it and open a draft PR. Reply `reject` to leave it on the machine. Only these two words are read at this gate — a written answer is refused."
+        message: "Prêt à livrer\n\nTout est commité sur la branche ; le récapitulatif est ci-dessous.\n\n*Répondre dans ce fil :*\n• `push` — je pousse et j'ouvre une PR en draft\n• `reject` — ça reste sur la machine\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
         show_file: ".specify/state/{{ context.run_id }}/ship.md"
         options: [push, reject]
         # skip only skips the gate itself: the rejection must be carried over

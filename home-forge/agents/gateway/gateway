@@ -109,7 +109,8 @@ announce() {
           --slurpfile s "$state_file" \
       '{id: $id, kind: "failure", target: $target, project: $project,
         run_id: $run, step: $step, input: "", tree: $tree, answer_file: "",
-        question: ("The run stopped at " + $step + ": " + ($s[0].error // "no reason recorded")),
+        question: ("Run en échec\n\nLe run s'\''est arrêté à l'\''étape `" + $step + "` :\n\n> "
+                   + ($s[0].error // "aucune raison enregistrée")),
         options: [], attachment: null}' > "$req"
   fi
 

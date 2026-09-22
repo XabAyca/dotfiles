@@ -25,12 +25,16 @@ STUB
 chmod +x "$T/bin/curl"
 
 req="$T/req.json"
-cat > "$req" <<'JSON'
+cat > "$req" <<JSON
 {"id":"proj_branch__r1__ship-gate__1790",
- "target":"proj/branch","run_id":"r1","step":"ship-gate",
- "question":"Ship it?","options":["push","reject"],"answer_file":"",
- "tree":"/tmp/nowhere","attachment":null,
+ "kind":"gate","target":"proj/branch","run_id":"r1","step":"ship-gate",
+ "question":"Pr\u00eat \u00e0 livrer\n\nTout est commit\u00e9 sur la branche.\n\u2022 \`push\` \u2014 je pousse",
+ "options":["push","reject"],"answer_file":"",
+ "tree":"$T","attachment":"verdict.json",
  "handle":"1790000000.000100"}
+JSON
+cat > "$T/verdict.json" <<'JSON'
+{"status":"PASS","summary":"tout tient","bullets":["la migration passe"]}
 JSON
 
 export PATH="$T/bin:$PATH" CURL_BODY="$T/sent.json"
@@ -44,8 +48,20 @@ out=$(bash "$HERE/notify" "$req")
 [ "$out" = "1790000000.000100" ] || say "notify returned '$out'"
 jq -e . "$T/sent.json" >/dev/null || say "the posted body is not valid JSON"
 [ "$(jq -r .channel "$T/sent.json")" = D0TEST ] || say "wrong channel in the posted body"
-grep -qF "Ship it?" <<< "$(jq -r .text "$T/sent.json")" || say "the question is missing from the body"
-grep -qF "push · reject" <<< "$(jq -r .text "$T/sent.json")" || say "the options are missing from the body"
+text=$(jq -r .text "$T/sent.json")
+# The gate writes what is said; the channel only frames it. A title on the
+# header line, the rest of the message as it stands, the digest quoted.
+head -1 <<< "$text" | grep -qF '❓ *Prêt à livrer* — `proj/branch`' \
+  || say "the header line is '$(head -1 <<< "$text")'"
+grep -qF '• `push` — je pousse' <<< "$text" || say "the gate's own options are missing"
+grep -qF '> *PASS* — tout tient' <<< "$text" || say "the digest is not quoted into the body"
+grep -qF '> • la migration passe' <<< "$text" || say "the digest bullets are missing"
+grep -qF 'run `r1` · étape `ship-gate`' <<< "$text" || say "the footer is missing"
+
+# A failure is not a question, and reads as one at a glance.
+jq '.kind = "failure" | .question = "Run en échec\n\nrien à répondre"' "$req" > "$T/fail.json"
+bash "$HERE/notify" "$T/fail.json" >/dev/null
+grep -q '^🚨 \*Run en échec\*' <<< "$(jq -r .text "$T/sent.json")" || say "a failure is not marked as one"
 
 # A refusal from Slack is a failure, not a message posted into the void.
 if FAKE_POST='{"ok":false,"error":"not_in_channel"}' bash "$HERE/notify" "$req" 2>"$T/err"; then
