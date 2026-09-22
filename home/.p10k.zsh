@@ -841,7 +841,7 @@
   # Context color in SSH without privileges.
   typeset -g POWERLEVEL9K_CONTEXT_{REMOTE,REMOTE_SUDO}_FOREGROUND=214  # gruvbox bright yellow
   # Default context color (no privileges, no SSH).
-  typeset -g POWERLEVEL9K_CONTEXT_FOREGROUND=246  # gruvbox fg4
+  typeset -g POWERLEVEL9K_CONTEXT_FOREGROUND=214  # gruvbox bright yellow
 
   # Context format when running with privileges: bold user@hostname.
   typeset -g POWERLEVEL9K_CONTEXT_ROOT_TEMPLATE='%B%n@%m'
@@ -850,9 +850,8 @@
   # Default context format (no privileges, no SSH): user@hostname.
   typeset -g POWERLEVEL9K_CONTEXT_TEMPLATE='%n@%m'
 
-  # Don't show context unless running with privileges or in SSH.
-  # Tip: Remove the next line to always show context.
-  typeset -g POWERLEVEL9K_CONTEXT_{DEFAULT,SUDO}_{CONTENT,VISUAL_IDENTIFIER}_EXPANSION=
+  # Always show context, not just with privileges or in SSH.
+  # typeset -g POWERLEVEL9K_CONTEXT_{DEFAULT,SUDO}_{CONTENT,VISUAL_IDENTIFIER}_EXPANSION=
 
   # Custom icon.
   # typeset -g POWERLEVEL9K_CONTEXT_VISUAL_IDENTIFIER_EXPANSION='⭐'
