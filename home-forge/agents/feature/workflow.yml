@@ -294,9 +294,25 @@ steps:
     type: if
     condition: "{{ steps.shippable.output.stdout == 'SHIP' }}"
     then:
-      - id: commit
+      - id: list-changes
         type: shell
-        run: 'bash $HOME/agents/feature/scripts/commit.sh'
+        run: 'bash $HOME/agents/feature/scripts/commit.sh {{ context.run_id }} list'
+
+      # The agent only decides the split; the script commits it and refuses a
+      # split that leaves a change out, so Claude never runs git here.
+      - id: split
+        type: if
+        condition: "{{ steps.list-changes.output.stdout == 'CHANGES' }}"
+        then:
+          - id: split-commits
+            type: prompt
+            integration: "{{ inputs.integration }}"
+            timeout: 1800
+            prompt: "Read .specify/state/{{ context.run_id }}/changes.txt and changes.diff. Split these changes into commits of one topic each, in the order they apply: documentation apart, migrations apart, the Spec Kit documents apart, then the feature — in several commits when it is big, one per slice that stands on its own. Each commit carries the tests of the code it holds. Write .specify/state/{{ context.run_id }}/commits.json as [{\"subject\": \"<gitmoji> <one-line English subject>\", \"paths\": [\"...\"]}], every path of changes.txt in exactly one commit. Run no git command."
+
+          - id: commit
+            type: shell
+            run: 'bash $HOME/agents/feature/scripts/commit.sh {{ context.run_id }} apply'
 
       - id: ship-gate
         type: gate
