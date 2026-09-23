@@ -36,5 +36,20 @@ is '' '   '
 [ "$(FAKE_SLUG="$(printf 'a%.0s' {1..80})" english_short_name x | wc -c)" -le 41 ] \
   || { echo "FAIL: a long answer was not cut down" >&2; fail=1; }
 
+# A frozen run has its steps at column 0; a nested id must not be offered as a
+# rewind point, retry would refuse it.
+cat > "$T/workflow.yml" <<'YML'
+steps:
+- id: plan
+  steps:
+  - id: plan-gate
+- id: review-loop
+  steps:
+    - id: review
+- id: ship
+YML
+got=$(top_steps "$T/workflow.yml" | tr '\n' ' ')
+[ "$got" = "plan review-loop ship " ] || { echo "FAIL: top_steps gave '$got'" >&2; fail=1; }
+
 [ "$fail" = 0 ] && echo "ok"
 exit "$fail"

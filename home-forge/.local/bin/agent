@@ -175,6 +175,14 @@ resume() {
   echo "resumed   $run_id in session $target"
 }
 
+# The engine rewrites the workflow when it freezes a run, so a top-level
+# step is not at the indentation the source has. Read it from the file.
+top_steps() {
+  local pad
+  pad=$(awk '/^steps:/{f=1; next} f && /- id: /{match($0, /^ */); print substr($0, 1, RLENGTH); exit}' "$1")
+  grep "^${pad}- id: " "$1" | sed 's/.*- id: //'
+}
+
 retry() {
   local target=${1:?missing project/branch} run_id=${2:?missing run_id}
   local step=${3:-review-loop}
@@ -214,12 +222,8 @@ retry() {
     echo "cleared   $(echo "$names" | tr '\n' ' ')"
   fi
 
-  # The engine rewrites the workflow when it freezes a run, so a top-level
-  # step is not at the indentation the source has. Read it from the file.
-  local pad idx tmp
-  pad=$(awk '/^steps:/{f=1; next} f && /- id: /{match($0, /^ */); print substr($0, 1, RLENGTH); exit}' \
-        "$dir/workflow.yml")
-  idx=$(grep "^${pad}- id: " "$dir/workflow.yml" | grep -n -- "- id: ${step}\$" | cut -d: -f1)
+  local idx tmp
+  idx=$(top_steps "$dir/workflow.yml" | grep -nx -- "$step" | cut -d: -f1)
   [ -n "$idx" ] || { echo "no top-level step '$step' in this workflow" >&2; exit 1; }
 
   tmp=$(mktemp)
@@ -304,10 +308,10 @@ menu() {
 
   local actions
   case $status in
-    paused)  actions=$'answer approve\nanswer reject\nanswer in plain text\nattach\nstop' ;;
+    paused)  actions=$'answer approve\nanswer reject\nanswer in plain text\nretry\nattach\nstop' ;;
     running) actions=$'attach\nstop' ;;
     failed)  actions=$'resume\nretry\nattach\nstop' ;;
-    *)       actions=$'attach\nrecord\ndone' ;;
+    *)       actions=$'attach\nretry\nrecord\ndone' ;;
   esac
 
   local action
@@ -327,7 +331,14 @@ menu() {
       else exec tmux new-session -A -s "$target" -c "$PROJECTS/$target"; fi ;;
     stop)   stop "$target" ;;
     resume) resume "$target" "$run" ;;
-    retry)  retry "$target" "$run" ;;
+    retry)
+      local steps from
+      steps=$(top_steps "$PROJECTS/$target/.specify/workflows/runs/$run/workflow.yml")
+      from=$(printf '%s\n' "$steps" \
+        | fzf --prompt="< retry $target from > " --height=40% --reverse --no-sort \
+              --bind "start:pos($(printf '%s\n' "$steps" | grep -nx review-loop | cut -d: -f1))") \
+        || return 0
+      retry "$target" "$run" "$from" ;;
     record) record show "$run" ;;
     done)   done_ "$target" ;;
   esac
