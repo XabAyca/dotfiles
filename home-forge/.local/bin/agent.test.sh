@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # The naming call is the only thing standing between a French description and
 # a French branch, so what it makes of an answer is worth pinning down. Stub
-# claude, no model, no worktree.
+# claude, no model; done gets a throwaway repo and worktree.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
@@ -50,6 +50,19 @@ steps:
 YML
 got=$(top_steps "$T/workflow.yml" | tr '\n' ' ')
 [ "$got" = "plan review-loop ship " ] || { echo "FAIL: top_steps gave '$got'" >&2; fail=1; }
+
+# done tears down what the bootstrap set up before the worktree goes.
+for cmd in record tmux; do printf '#!/usr/bin/env bash\n' > "$T/bin/$cmd"; chmod +x "$T/bin/$cmd"; done
+PROJECTS="$T/projects"
+git init -q "$PROJECTS/p/main"
+git -C "$PROJECTS/p/main" commit -q --allow-empty -m init
+git -C "$PROJECTS/p/main" worktree add -q "$PROJECTS/p/b"
+mkdir "$PROJECTS/p/b/.specify"
+printf '#!/usr/bin/env bash\npwd > "%s/torn"\n' "$T" > "$PROJECTS/p/b/.specify/agents-teardown.sh"
+chmod +x "$PROJECTS/p/b/.specify/agents-teardown.sh"
+done_ p/b >/dev/null
+[ "$(cat "$T/torn" 2>/dev/null)" = "$PROJECTS/p/b" ] || { echo "FAIL: done did not run the teardown in the worktree" >&2; fail=1; }
+[ -e "$PROJECTS/p/b" ] && { echo "FAIL: done left the worktree" >&2; fail=1; }
 
 [ "$fail" = 0 ] && echo "ok"
 exit "$fail"

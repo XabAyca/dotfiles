@@ -353,6 +353,11 @@ done_() {
     echo "$tree has uncommitted changes" >&2; exit 1; }
   # Last chance: what the runs cost goes away with the worktree otherwise.
   record run "$target"
+  # The bootstrap may have made things outside the tree, databases for one.
+  if [ -x "$tree/.specify/agents-teardown.sh" ]; then
+    echo "teardown  running .specify/agents-teardown.sh"
+    (cd "$tree" && ./.specify/agents-teardown.sh)
+  fi
   # Forced only because the check above already passed: git refuses a worktree
   # holding anything at all, and what is left is the runner's own footprint.
   git -C "$PROJECTS/${target%%/*}/main" worktree remove --force "$tree"
