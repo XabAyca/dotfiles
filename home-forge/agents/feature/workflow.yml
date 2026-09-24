@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.8.0"
+  version: "0.9.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -37,6 +37,10 @@ inputs:
     enum: ["", approve, reject]
     default: ""
   analyze_verdict:
+    type: string
+    enum: ["", approve, reject]
+    default: ""
+  implement_verdict:
     type: string
     enum: ["", approve, reject]
     default: ""
@@ -182,15 +186,18 @@ steps:
           timeout: 1800
           prompt: "Read .specify/state/{{ context.run_id }}/analyze.json. Correct the spec, the plan or the tasks so the high-severity findings no longer hold. Write no code."
 
+  # Nobody reads what a headless agent says when it stops, so why it stopped
+  # goes in a file the next gate shows.
   - id: implement
     command: speckit.implement
     integration: "{{ inputs.integration }}"
     input:
-      args: "{{ inputs.spec }}"
+      args: "{{ inputs.spec }}\n\nIf you stop with tasks still unchecked, write .specify/state/{{ context.run_id }}/blocked.md: for each one, what blocks it and the question a person must answer."
 
   # Completeness, by Spec Kit. /speckit-converge measures the codebase against
   # the spec and appends what is missing to tasks.md; implement finishes it.
-  # An untouched tasks.md is how the command says there is nothing left.
+  # An untouched tasks.md is how the command says there is nothing left, but
+  # only once implement has checked every task it had.
   - id: converge-loop
     type: do-while
     condition: "{{ steps.converged.output.stdout == 'MORE' }}"
@@ -217,7 +224,28 @@ steps:
             command: speckit.implement
             integration: "{{ inputs.integration }}"
             input:
-              args: "{{ inputs.spec }}"
+              args: "{{ inputs.spec }}\n\nIf you stop with tasks still unchecked, write .specify/state/{{ context.run_id }}/blocked.md: for each one, what blocks it and the question a person must answer."
+
+  # A stalled implement needs what only a person has — an answer, a database,
+  # a permission — and a review of half the feature could only say so.
+  - id: incomplete
+    type: if
+    condition: "{{ steps.converged.output.stdout == 'BLOCKED' }}"
+    then:
+      - id: implement-gate
+        type: gate
+        message: "Implémentation incomplète\n\nL'implémentation s'est arrêtée avant la fin ; ce qui la bloque et les tâches restées ouvertes sont ci-dessous.\n\n*Répondre dans ce fil :*\n• `approve` — on review ce qui existe aujourd'hui\n• `reject` — le run s'arrête ici\n• _du texte libre_ — j'applique tes réponses, puis je reprends l'implémentation"
+        show_file: ".specify/state/{{ context.run_id }}/incomplete.md"
+        answer_file: implement-answer.md
+        options: [approve, reject]
+        on_reject: abort
+        verdict_input: implement_verdict
+
+      - id: resume-implement
+        type: prompt
+        integration: "{{ inputs.integration }}"
+        timeout: 1800
+        prompt: "If .specify/state/{{ context.run_id }}/implement-answer.md exists, read it, apply what it settles, then run /speckit-implement to finish the tasks still open. If it does not, do nothing and say so."
 
   # Convergence that never settles is a plan that was too small, not a lap to
   # run again. The loop leaves on EXHAUSTED exactly as it does on CONVERGED.

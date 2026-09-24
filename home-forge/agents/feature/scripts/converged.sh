@@ -25,6 +25,28 @@ fi
 
 [ -f "$before" ] || { echo "no snapshot taken before converge" >&2; exit 1; }
 
+# The snapshot is what implement left behind: a task still open there is one it
+# gave up on, and another lap would give up on it again. A [HUMAN] task waits
+# for a person, not for implement.
+open=$(grep -E '^[[:space:]]*- \[ \]' "$before" | grep -vF '[HUMAN]' || true)
+if [ -n "$open" ]; then
+  {
+    echo "# Implementation incomplete — run ${run_id}"
+    echo
+    echo "## Why the agent stopped"
+    echo
+    cat "${state}/blocked.md" 2>/dev/null || echo "It did not say."
+    echo
+    echo "## Tasks still open"
+    echo
+    echo "$open"
+  } > "${state}/incomplete.md"
+  # Read once, or the next stop would show this one's reasons.
+  rm -f "${state}/blocked.md"
+  printf %s BLOCKED
+  exit 0
+fi
+
 if cmp -s "$before" "$tasks"; then
   printf %s CONVERGED
   exit 0
