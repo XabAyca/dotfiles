@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.9.0"
+  version: "0.10.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -139,11 +139,13 @@ steps:
     timeout: 1800
     prompt: "/design-ui {{ context.run_id }}"
 
+  # The marker is what read-analyze.sh looks for: a task no agent can do must
+  # reach a person before the code that depends on it.
   - id: tasks
     command: speckit.tasks
     integration: "{{ inputs.integration }}"
     input:
-      args: "{{ inputs.spec }}"
+      args: "{{ inputs.spec }}\n\nMark [HUMAN], right after the task id, every task only a person can do: a check outside this repository, a decision nobody has recorded yet."
 
   # A contradiction between spec, plan and tasks is settled before code is
   # written. /speckit-analyze is read-only by design, so the step that runs it
@@ -167,8 +169,9 @@ steps:
       BLOCKING:
         - id: analyze-gate
           type: gate
-          message: "Analyse bloquante\n\nL'analyse a trouvé une violation de la constitution, ou une exigence que rien ne couvre — c'est ci-dessous. Aucun code n'a encore été écrit.\n\n*Répondre dans ce fil :*\n• `approve` — je corrige la spec, le plan ou les tâches jusqu'à ce que le constat tombe\n• `reject` — le run s'arrête ici\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
-          show_file: ".specify/state/{{ context.run_id }}/analyze.json"
+          message: "Analyse bloquante\n\nL'analyse a trouvé une violation de la constitution, une exigence que rien ne couvre, ou une tâche que seul un humain peut faire — c'est ci-dessous. Aucun code n'a encore été écrit.\n\n*Répondre dans ce fil :*\n• `approve` — je corrige la spec, le plan ou les tâches jusqu'à ce que le constat tombe ; une tâche humaine reste ouverte\n• `reject` — le run s'arrête ici\n• _du texte libre_ — tes décisions et tes réponses aux tâches humaines, que j'applique telles quelles"
+          show_file: ".specify/state/{{ context.run_id }}/analyze.md"
+          answer_file: analyze-answer.md
           options: [approve, reject]
           on_reject: abort
           verdict_input: analyze_verdict
@@ -177,7 +180,7 @@ steps:
           type: prompt
           integration: "{{ inputs.integration }}"
           timeout: 1800
-          prompt: "Read .specify/state/{{ context.run_id }}/analyze.json. Correct the spec, the plan or the tasks so the critical findings no longer hold. Write no code."
+          prompt: "Read .specify/state/{{ context.run_id }}/analyze.json and, if it exists, analyze-answer.md: a decision it states settles the findings it covers, and an answer it gives to a [HUMAN] task is recorded in that task, which is then checked. Correct the spec, the plan or the tasks so the critical findings no longer hold. Leave a [HUMAN] task nobody answered open. Write no code."
 
       CONCERNS:
         - id: apply-concerns
