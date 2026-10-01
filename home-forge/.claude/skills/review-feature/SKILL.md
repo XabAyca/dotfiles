@@ -25,6 +25,10 @@ code against what was specified, not against how you would have written it.
 3. `.specify/memory/constitution.md` — the project's own rules
 4. The branch diff against its base
 
+The `## Decisions` section of `plan.md` records choices already made, by a
+person or delegated to the agent before any code was written. Do not raise them
+again, neither as a finding nor as a reason for `NEEDS_HUMAN`.
+
 ## What to check
 
 - **Spec conformity** — every requirement implemented, nothing extra
@@ -39,6 +43,18 @@ code against what was specified, not against how you would have written it.
 - **Comments** — one per non-obvious reason. A paraphrase of the code, the
   story of a bug already fixed, or more than one comment per ten lines of code
   (the file header aside) is a finding
+
+## Blocking or not
+
+A finding blocks when the feature cannot ship as it is: a requirement missing
+or wrong, a bug a user would hit, a requirement without a passing test, a
+constitution violation. Everything else — a stale line in a document, an
+unticked box, a naming preference, a comment too many — is a note: it goes in
+`bullets`, prefixed `Note:`, and does not change the status.
+
+If `.specify/state/$ARGUMENTS/attempts` exists, a fix has run since the last
+review: judge whether its blocking findings are gone and nothing broke. A new
+note found on this pass is still only a note.
 
 ## What you must not do
 
@@ -65,11 +81,12 @@ Not a summary of your reasoning — a summary of the change.
 
 Status rules:
 
-- `DONE` — nothing blocking. Do not use it to be agreeable.
-- `NEEDS_FIX` — concrete, fixable problems. Each one names a file, a line and
-  the change to make. A reviewer who cannot say what to change has no finding.
+- `DONE` — nothing blocking, notes or not. Do not use it to be agreeable.
+- `NEEDS_FIX` — blocking problems only. Each one names a file, a line and the
+  change to make. A reviewer who cannot say what to change has no finding.
 - `NEEDS_HUMAN` — the spec is ambiguous, or an architectural decision is
-  required, or two constitution principles conflict. Not for difficulty.
+  required, or two constitution principles conflict — and `## Decisions` does
+  not already settle it. Not for difficulty.
 - `BLOCKED` — the artifacts needed to review are missing.
 
 Writing this file is the last thing you do. If you cannot write it, say so

@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.11.0"
+  version: "0.12.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -20,9 +20,11 @@ inputs:
   integration:
     type: string
     default: "auto"
+  # One fix and the review that checks it. Past that the reviewer only finds
+  # new trivia, and a person overrules it anyway.
   max_fix:
     type: number
-    default: 3
+    default: 2
   max_converge:
     type: number
     default: 3
@@ -181,7 +183,7 @@ steps:
             type: prompt
             integration: "{{ inputs.integration }}"
             timeout: 1800
-            prompt: "Fix only the problems listed in .specify/state/{{ context.run_id }}/review.json and, if it exists, ui.json. Do not change the spec or the plan. Re-run the tests afterwards."
+            prompt: "Fix only the blocking problems listed in .specify/state/{{ context.run_id }}/review.json and, if it exists, ui.json; leave the bullets prefixed Note: alone. Do not change the spec or the plan. Re-run the tests afterwards."
 
   - id: ship-summary
     type: shell

@@ -80,8 +80,14 @@ instead. Compare against something concrete: the design, a neighbouring
 screen, or a value used elsewhere in the project. A finding that cannot cite
 either a line or a neighbour is an opinion — drop it.
 
-Severity is the user's, not yours: a misaligned label that nobody notices is
-not worth a loop iteration, an unreadable state in dark mode is.
+Severity is the user's, not yours. A finding blocks when a user would hit it:
+an unreadable state in dark mode, a string left in the wrong language, a
+screen that breaks on a long value. A misaligned label nobody notices is a
+note: it goes in `bullets`, prefixed `Note:`, and does not change the status.
+
+If `.specify/state/$ARGUMENTS/attempts` exists, a fix has run since the last
+review: judge whether its blocking findings are gone. A new note found on this
+pass is still only a note.
 
 ## Verdict — mandatory final action
 
@@ -99,9 +105,9 @@ JSON with no markdown fence:
 
 Status rules:
 
-- `DONE` — the interface holds. Also the verdict when the change has no
-  interface at all.
-- `NEEDS_FIX` — concrete, fixable problems, each with a file, a line and the
+- `DONE` — the interface holds, notes or not. Also the verdict when the
+  change has no interface at all.
+- `NEEDS_FIX` — blocking problems only, each with a file, a line and the
   change to make.
 - `NEEDS_HUMAN` — the design is genuinely ambiguous, or fixing it would
   contradict the spec. Not for difficulty.
