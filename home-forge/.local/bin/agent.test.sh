@@ -51,6 +51,15 @@ YML
 got=$(top_steps "$T/workflow.yml" | tr '\n' ' ')
 [ "$got" = "plan review-loop ship " ] || { echo "FAIL: top_steps gave '$got'" >&2; fail=1; }
 
+# A new worktree reads main's secrets through a link; one it already has stays.
+mkdir -p "$T/env/main" "$T/env/new" "$T/env/own"
+echo SECRET=1 > "$T/env/main/.env"
+echo OWN=1 > "$T/env/own/.env"
+link_env "$T/env/main" "$T/env/new"
+link_env "$T/env/main" "$T/env/own"
+[ "$(readlink "$T/env/new/.env")" = "$T/env/main/.env" ] || { echo "FAIL: link_env did not link .env" >&2; fail=1; }
+[ "$(cat "$T/env/own/.env")" = OWN=1 ] || { echo "FAIL: link_env replaced an existing .env" >&2; fail=1; }
+
 # done tears down what the bootstrap set up before the worktree goes.
 for cmd in record tmux; do printf '#!/usr/bin/env bash\n' > "$T/bin/$cmd"; chmod +x "$T/bin/$cmd"; done
 PROJECTS="$T/projects"

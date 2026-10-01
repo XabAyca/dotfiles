@@ -74,6 +74,14 @@ english_short_name() {
     | sed 's/[^a-z0-9-]/-/g; s/-\{2,\}/-/g; s/^-//; s/-$//' | cut -d- -f1-4 | cut -c1-40
 }
 
+# A fresh worktree lacks the gitignored .env; a link keeps a single copy of the
+# secrets. Not .env.rb: a bootstrap edits that one per worktree, and through a
+# link it would edit main's.
+link_env() {
+  local main=$1 tree=$2
+  if [ -e "$main/.env" ] && [ ! -e "$tree/.env" ]; then ln -s "$main/.env" "$tree/.env"; fi
+}
+
 start() {
   local project=${1:?missing project} description=${2:?missing description}
   local short=${3:-}
@@ -114,6 +122,7 @@ start() {
   [ -e "$tree" ] && { echo "$tree already exists" >&2; exit 1; }
 
   git -C "$main" worktree add "$tree" -b "$branch" "origin/$base"
+  link_env "$main" "$tree"
 
   # The installed workflow is not committed, so each worktree gets its own copy.
   (cd "$tree" && specify workflow add --dev "$AGENTS" >/dev/null)
