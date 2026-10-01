@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.18.0"
+  version: "0.19.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -179,17 +179,18 @@ steps:
     type: do-while
     condition: "{{ steps.verdict.output.stdout == 'RETRY' }}"
     steps:
-      - id: review
-        type: prompt
-        integration: "{{ inputs.integration }}"
-        timeout: 1800
-        prompt: "/review-feature {{ context.run_id }}"
-
-      - id: review-ui
-        type: prompt
-        integration: "{{ inputs.integration }}"
-        timeout: 1800
-        prompt: "/review-ui {{ context.run_id }}"
+      # Side by side: only review-feature runs the tests, and each writes its
+      # own verdict file.
+      - id: reviews
+        type: fan-out
+        items: ["review-feature", "review-ui"]
+        max_concurrency: 2
+        step:
+          id: review
+          type: prompt
+          integration: "{{ inputs.integration }}"
+          timeout: 1800
+          prompt: "/{{ item }} {{ context.run_id }}"
 
       - id: verdict
         type: shell

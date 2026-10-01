@@ -57,7 +57,8 @@ if length == 0 then empty else . end
         | select($w.type[.key] | model) | .value] | add // 0),
      replays: ([$w.runs | to_entries[]
         | select($w.type[.key] | leaf) | .value - 1] | add // 0),
-     review_passes: passes("review"),
+     # One verdict per pass, however the reviews themselves are run.
+     review_passes: passes("verdict"),
      converge_rounds: passes("converge"),
      gates: [$s.step_results | to_entries[] | select(.value.type == "gate")
              | {step: .key, answer: (.value.output.choice // null)}],
