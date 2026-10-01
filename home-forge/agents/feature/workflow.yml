@@ -177,6 +177,15 @@ steps:
             input:
               args: "{{ inputs.spec }}\n\nIf you stop with tasks still unchecked, write .specify/state/{{ context.run_id }}/blocked.md: for each one, what blocks it and the question a person must answer. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
 
+  # A run implement gave up on stops here; incomplete.md says why.
+  - id: implement-blocked
+    type: if
+    condition: "{{ steps.converged.output.stdout == 'BLOCKED' }}"
+    then:
+      - id: implemented
+        type: shell
+        run: 'bash $HOME/agents/feature/scripts/implemented.sh'
+
   # Quality, by us. Spec Kit says whether everything was built; these say
   # whether it was built well. What they leave standing goes to the ship gate,
   # not to a gate of its own: that is where a person reads how the run went.
