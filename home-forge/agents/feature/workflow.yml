@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.17.0"
+  version: "0.18.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -64,6 +64,7 @@ steps:
   - id: clarify
     command: speckit.clarify
     integration: "{{ inputs.integration }}"
+    model: "sonnet"
     input:
       args: "{{ inputs.spec }}\n\nNobody will answer your questions. For each one, take the answer you would recommend, write it into the spec and mark it [ASSUMPTION: <the choice>]. Leave no [NEEDS CLARIFICATION] marker behind."
 
@@ -100,6 +101,7 @@ steps:
   - id: analyze
     type: prompt
     integration: "{{ inputs.integration }}"
+    model: "sonnet"
     timeout: 1800
     prompt: "Run /speckit-analyze. Then write .specify/state/{{ context.run_id }}/analyze.json containing raw JSON with no markdown fence: {\"critical\": <count>, \"high\": <count>, \"summary\": \"one line\", \"findings\": [\"one line each\"]}. Counts come from the severity column of the report. Change nothing else."
 
@@ -220,6 +222,7 @@ steps:
       - id: split-commits
         type: prompt
         integration: "{{ inputs.integration }}"
+        model: "sonnet"
         timeout: 1800
         prompt: "Read .specify/state/{{ context.run_id }}/changes.txt and changes.diff. Split these changes into commits of one topic each, in the order they apply: documentation apart, migrations apart, the Spec Kit documents apart, then the feature — in several commits when it is big, one per slice that stands on its own. Each commit carries the tests of the code it holds. Write .specify/state/{{ context.run_id }}/commits.json as [{\"subject\": \"<gitmoji> <one-line English subject>\", \"paths\": [\"...\"]}], every path of changes.txt in exactly one commit. Run no git command."
 
