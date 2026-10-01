@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.19.0"
+  version: "0.20.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -113,16 +113,21 @@ steps:
   # gate speaks to a human, so it speaks French — and in one shape: the first
   # line is the title the channel puts in its header, the rest is the body,
   # the options it offers included.
-  - id: decision-gate
-    type: gate
-    message: "Avant le code\n\nRien n'a encore été codé. Ci-dessous : les hypothèses prises sur la spec, les constats de l'analyse, les tâches que seul un humain peut faire, puis le plan.\n\n*Répondre dans ce fil :*\n• `approve` — je construis ça ; je tranche moi-même chaque constat ouvert et je note chaque choix dans le plan\n• `reject` — le run s'arrête ici\n• _du texte libre_ — tes décisions, tes corrections du plan et tes réponses aux tâches humaines, que j'applique telles quelles avant de construire"
-    show_file: ".specify/state/{{ context.run_id }}/decision.md"
-    # Not an engine key: it ignores this one and keeps it in the copy it
-    # freezes, which is where the gateway reads it.
-    answer_file: decision-answer.md
-    options: [approve, reject]
-    on_reject: abort
-    verdict_input: decision_verdict
+  # Nothing to decide is no reason to keep a person waiting.
+  - id: needs-decision
+    type: if
+    condition: "{{ steps.decision.output.stdout == 'REVIEW' }}"
+    then:
+      - id: decision-gate
+        type: gate
+        message: "Avant le code\n\nRien n'a encore été codé. Ci-dessous : les hypothèses prises sur la spec, les constats de l'analyse, les tâches que seul un humain peut faire, puis le plan.\n\n*Répondre dans ce fil :*\n• `approve` — je construis ça ; je tranche moi-même chaque constat ouvert et je note chaque choix dans le plan\n• `reject` — le run s'arrête ici\n• _du texte libre_ — tes décisions, tes corrections du plan et tes réponses aux tâches humaines, que j'applique telles quelles avant de construire"
+        show_file: ".specify/state/{{ context.run_id }}/decision.md"
+        # Not an engine key: it ignores this one and keeps it in the copy it
+        # freezes, which is where the gateway reads it.
+        answer_file: decision-answer.md
+        options: [approve, reject]
+        on_reject: abort
+        verdict_input: decision_verdict
 
   # A choice recorded in plan.md is one the review treats as made, instead of
   # asking for it a second time.
