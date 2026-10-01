@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.13.0"
+  version: "0.14.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -25,9 +25,11 @@ inputs:
   max_fix:
     type: number
     default: 2
+  # One lap to build what converge found and one to check it is gone. A
+  # third only ever reached the gate a person approved.
   max_converge:
     type: number
-    default: 3
+    default: 2
   # Every gate carries a verdict_input: without one, a gate can only be
   # answered at a real terminal, which rules out the supervisor and Slack.
   decision_verdict:
