@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.15.0"
+  version: "0.16.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -45,11 +45,19 @@ steps:
   # The spec follows the language of the constitution, since that is what the
   # analysis and the review measure it against. Everything a machine names —
   # feature, worktree, branch, commit subject, PR title — stays English.
+  # Headless, nobody approves a preliminary note a project convention asks
+  # for: the decision gate shows the assumptions instead.
   - id: specify
     command: speckit.specify
     integration: "{{ inputs.integration }}"
     input:
-      args: "{{ inputs.spec }}\n\nWrite the specification in the language of .specify/memory/constitution.md, English if there is none. The feature name, the worktree, the branch, the commit subjects and the PR title stay in English."
+      args: "{{ inputs.spec }}\n\nWrite the specification in the language of .specify/memory/constitution.md, English if there is none. The feature name, the worktree, the branch, the commit subjects and the PR title stay in English. Nobody will answer or approve anything: skip any preliminary note, summary or validation step a project convention asks for and write the spec now. Mark every choice you make alone [ASSUMPTION: <the choice>]."
+
+  # An agent that stops to ask still exits 0, and every step after it would
+  # then run on a feature that does not exist.
+  - id: specified
+    type: shell
+    run: 'test -f .specify/feature.json || { echo "specify created no feature: .specify/feature.json is missing" >&2; exit 1; }'
 
   # Headless, /speckit.clarify has nobody to ask. What it settles alone is
   # marked, so the decision gate can show it and a person can overrule it.
