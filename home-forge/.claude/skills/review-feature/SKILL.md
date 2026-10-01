@@ -37,6 +37,15 @@ again, neither as a finding nor as a reason for `NEEDS_HUMAN`.
 - **Tests** — present, meaningful, and passing. If
   `.specify/agents-baseline.txt` lists specs, those already failed before this
   work: judge regressions only, and never try to fix them.
+- **Acceptance scenarios** — each scenario of `spec.md` has a test that walks
+  it through the entry point a user or a caller uses — the route, the form,
+  the job — not only through the service underneath. A scenario without one
+  blocks, unless the constitution asks less for that kind of change.
+- **The project's own review** — if `.claude/skills/code-review/SKILL.md`
+  exists, follow it on the uncommitted changes, running the commands it embeds
+  yourself, and fold its findings into your verdict. Read the file rather than
+  invoke `/code-review`: that name also belongs to a built-in review. Its
+  blocking level blocks; its other levels block only under the rule below.
 - **Over-engineering** — run `/ponytail-review` on the diff and fold its
   findings into your verdict
 - **Craft** — no dead code, no commented-out code
