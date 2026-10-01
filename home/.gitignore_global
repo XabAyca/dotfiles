@@ -22,3 +22,6 @@ Procfile.dev
 CLAUDE.md
 
 **/.claude/settings.local.json
+
+# Personal spec-kit workflow, installed per repo from ~/agents/feature
+.specify/workflows/feature/
