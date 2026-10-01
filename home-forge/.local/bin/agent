@@ -319,7 +319,7 @@ menu() {
   case $status in
     paused)  actions=$'answer approve\nanswer reject\nanswer in plain text\nretry\nattach\nstop' ;;
     running) actions=$'attach\nstop' ;;
-    failed)  actions=$'resume\nretry\nattach\nstop' ;;
+    failed)  actions=$'resume\nretry\nattach\nstop\ndone' ;;
     *)       actions=$'attach\nretry\nrecord\ndone' ;;
   esac
 
