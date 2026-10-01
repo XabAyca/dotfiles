@@ -247,7 +247,7 @@ steps:
 
   - id: ship-gate
     type: gate
-    message: "Prêt à livrer\n\nTout est commité sur la branche ; le récapitulatif est ci-dessous.\n\n*Répondre dans ce fil :*\n• `push` — je pousse et j'ouvre une PR en draft\n• `reject` — ça reste sur la machine\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
+    message: "{{ steps.ship-summary.output.stdout }}\n\nTout est commité sur la branche ; le récapitulatif est ci-dessous.\n\n*Répondre dans ce fil :*\n• `push` — je pousse et j'ouvre une PR en draft\n• `reject` — ça reste sur la machine\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
     show_file: ".specify/state/{{ context.run_id }}/ship.md"
     options: [push, reject]
     # skip only skips the gate itself: the rejection must be carried over

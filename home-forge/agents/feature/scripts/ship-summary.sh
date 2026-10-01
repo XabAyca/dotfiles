@@ -14,6 +14,10 @@ status_of() {
 
 review=$(status_of review)
 ui=$(status_of ui)
+passed=yes
+if [ "$review" != DONE ] || { [ "$ui" != DONE ] && [ "$ui" != ABSENT ]; }; then
+  passed=no
+fi
 
 {
   echo "# Livraison — run ${run_id}"
@@ -24,7 +28,7 @@ ui=$(status_of ui)
   echo "| interface review | ${ui} |"
   # A missing ui.json is normal, as in verdict.sh; a missing review.json is a
   # review that never reached a verdict.
-  if [ "$review" != DONE ] || { [ "$ui" != DONE ] && [ "$ui" != ABSENT ]; }; then
+  if [ "$passed" = no ]; then
     echo
     echo "**Les reviews ne sont pas passées. Lire les verdicts avant de pousser.**"
   fi
@@ -42,3 +46,7 @@ ui=$(status_of ui)
     jq -r '.bullets[]? // empty | "- " + .' "${state}/${f}.json"
   done
 } > "${state}/ship.md"
+
+# The ship gate's title; no newline, it is spliced into the message.
+if [ "$passed" = yes ]; then printf %s "Prêt à livrer"
+else printf %s "Pas prêt à livrer : les reviews ne sont pas passées"; fi
