@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.16.0"
+  version: "0.17.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -57,7 +57,7 @@ steps:
   # then run on a feature that does not exist.
   - id: specified
     type: shell
-    run: 'test -f .specify/feature.json || { echo "specify created no feature: .specify/feature.json is missing" >&2; exit 1; }'
+    run: 'bash $HOME/agents/feature/scripts/produced.sh spec'
 
   # Headless, /speckit.clarify has nobody to ask. What it settles alone is
   # marked, so the decision gate can show it and a person can overrule it.
@@ -73,6 +73,10 @@ steps:
     input:
       args: "{{ inputs.spec }}"
 
+  - id: planned
+    type: shell
+    run: 'bash $HOME/agents/feature/scripts/produced.sh plan'
+
   - id: design-ui
     type: prompt
     integration: "{{ inputs.integration }}"
@@ -86,6 +90,10 @@ steps:
     integration: "{{ inputs.integration }}"
     input:
       args: "{{ inputs.spec }}\n\nMark [HUMAN], right after the task id, every task only a person can do: a check outside this repository, a decision nobody has recorded yet. Each acceptance scenario of the spec gets a test task that walks it through the entry point a user or a caller uses — the route, the form, the job."
+
+  - id: tasked
+    type: shell
+    run: 'bash $HOME/agents/feature/scripts/produced.sh tasks'
 
   # /speckit-analyze is read-only by design, so the step that runs it records
   # the outcome where a script can read it.
