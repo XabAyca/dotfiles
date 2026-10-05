@@ -1,66 +1,30 @@
 #!/usr/bin/env bash
-# Posts the question into a Slack conversation and returns the message
-# timestamp, which is the correlation key: the answer is whatever is replied
-# in its thread. The bot posts under its own name, which is what makes the
-# message notify: Slack never notifies you of what you posted yourself.
-#
-# What to say belongs to the gate that asks, not here: the first line of its
-# message is the title, the rest is the body, the options it offers included.
+# Posts one line saying a run wants looking at. The bot posts under its own
+# name, which is what makes the message notify: Slack never notifies you of
+# what you posted yourself. Nothing reads a reply; the answer is given on the
+# machine.
 set -euo pipefail
 
 req=${1:?missing request}
 
 SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:?set SLACK_BOT_TOKEN in config.env}
 SLACK_CONVERSATION=${SLACK_CONVERSATION:?set SLACK_CONVERSATION in config.env}
-# Only the digest travels, so answering never requires a session on the
-# machine. Set to 0 to send nothing but the path.
-INCLUDE=${SLACK_INCLUDE_ATTACHMENT:-1}
 
-kind=$(jq -r '.kind' "$req")
-target=$(jq -r '.target' "$req")
-message=$(jq -r '.question' "$req")
-attachment=$(jq -r '.attachment // empty' "$req")
-tree=$(jq -r '.tree' "$req")
-run=$(jq -r '.run_id' "$req")
-step=$(jq -r '.step' "$req")
+case "$(jq -r '.kind' "$req")" in failure) icon=🚨 ;; done) icon=✅ ;; *) icon=❓ ;; esac
 
-title=$(head -1 <<< "$message")
-body=$(tail -n +2 <<< "$message")
-case "$kind" in failure) icon=🚨 ;; done) icon=✅ ;; *) icon=❓ ;; esac
+text=$(jq -r --arg icon "$icon" '
+  "\($icon) *\(.title)* — `\(.target)` · étape `\(.step)`\n"
+  + (if .url != "" then .url else "À voir sur la machine : `agent menu`" end)' "$req")
 
-payload=$(mktemp); auth=$(mktemp); trap 'rm -f "$payload" "$auth"' EXIT
-{
-  printf '%s *%s* — `%s`\n' "$icon" "$title" "$target"
-  [ -n "$body" ] && printf '%s\n' "$body"
-  if [ -n "$attachment" ]; then
-    printf '\n'
-    if [ "$INCLUDE" = 1 ] && [ -f "$tree/$attachment" ]; then
-      # Quoted: what the run reports is not what it is asking.
-      case "$attachment" in
-        *.json) jq -r '"> *" + .status + "* — " + .summary,
-                       (.bullets[]? // empty | "> • " + .)' "$tree/$attachment" ;;
-        *)      head -c 3000 "$tree/$attachment" | sed 's/^/> /' ;;
-      esac
-      printf '\n_Le fichier complet sur la machine : `%s/%s`_\n' "$tree" "$attachment"
-    else
-      printf '_À lire d'"'"'abord sur la machine : `%s/%s`_\n' "$tree" "$attachment"
-    fi
-  fi
-  printf '\n_run `%s` · étape `%s`_\n' "$run" "$step"
-} > "$payload"
-
+auth=$(mktemp); trap 'rm -f "$auth"' EXIT
 # The token goes through a file: an argument is visible in `ps` to everything
 # running on the machine.
 printf 'Authorization: Bearer %s\n' "$SLACK_BOT_TOKEN" > "$auth"
 
-ts=$(jq -Rs --arg c "$SLACK_CONVERSATION" '{channel: $c, text: .}' < "$payload" \
+ok=$(jq -n --arg c "$SLACK_CONVERSATION" --arg t "$text" '{channel: $c, text: $t}' \
   | curl -sS -X POST https://slack.com/api/chat.postMessage \
       -H "@$auth" -H 'Content-Type: application/json; charset=utf-8' \
       --data-binary @- \
-  | jq -r 'if .ok then .ts else "ERR:" + .error end')
+  | jq -r 'if .ok then "ok" else "ERR:" + .error end')
 
-case "$ts" in ERR:*) echo "slack notify: ${ts#ERR:}" >&2; exit 1 ;; esac
-grep -qE '^[0-9]+\.[0-9]+$' <<< "$ts" || {
-  echo "slack notify: no usable message_ts came back" >&2; exit 1; }
-
-printf %s "$ts"
+case "$ok" in ok) ;; *) echo "slack notify: ${ok#ERR:}" >&2; exit 1 ;; esac

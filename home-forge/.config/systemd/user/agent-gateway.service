@@ -1,5 +1,5 @@
 [Unit]
-Description=Carry questions from paused agent runs to a human, and answers back
+Description=Tell a human when an agent run wants looking at
 After=default.target
 
 [Service]

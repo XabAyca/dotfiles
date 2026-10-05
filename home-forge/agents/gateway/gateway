@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Carries a question from a paused run to a human, and the answer back.
+# Tells a human that a run wants looking at, once per pause, failure or end.
+# Nothing listens for an answer: a gate is answered on the machine, from
+# `agent menu`, which calls `gateway reply`.
 #
 # Knows nothing about any channel: a channel is a directory under channels/
-# holding two executables.
-#   notify <request.json>  delivers the question, prints a handle on stdout
-#   poll   <request.json>  prints the answer, or nothing when none has come
+# holding one executable.
+#   notify <request.json>  delivers the message
 #
-# Everything a channel cannot be trusted with — that the run exists, that the
-# choice is one the gate offered — is checked here, after the channel has
-# spoken.
+# Everything an answer cannot be trusted with — that the run still waits on a
+# gate, that the choice is one the gate offered — is checked here.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
@@ -32,16 +32,14 @@ TICK=${AGENT_GATEWAY_TICK:-60}
 # A written answer is a few sentences. Past this it is a paste by mistake.
 MAX_ANSWER=${AGENT_MAX_ANSWER:-4000}
 
-mkdir -p "$STATE/requests" "$STATE/done"
+mkdir -p "$STATE/done"
 
 usage() {
   cat >&2 <<'USAGE'
 usage:
-  gateway scan     one pass: announce what is waiting, apply what has answered
-  gateway run      the same, every tick, until stopped
-  gateway status   what is outstanding
+  gateway scan     one pass: say once what is waiting, failed or finished
   gateway reply <project>/<branch> <run_id> <answer>
-                   answer an announced question from here, not from the channel
+                   answer the gate a run is paused on
 USAGE
   exit 1
 }
@@ -56,7 +54,7 @@ channel() {
 # A run is identified by where it lives, which run it is, which step is
 # waiting, and when the engine dated that pause. The instant matters: a loop
 # can bring the same run back to the same gate, and each pause is its own
-# question.
+# message.
 request_id() { printf '%s__%s__%s__%s' "${1//\//_}" "$2" "$3" "${4//[^0-9]/}"; }
 
 # The gate's step result says what was asked; only the workflow says which
@@ -71,108 +69,62 @@ gate_field() {
   ' "$wf"
 }
 
-announce() {
-  local run_dir=$1 target=$2 project=$3
+# Where a run stands, as one JSON object; nothing while it is still working.
+# Read from the run itself every time, so a reply never acts on a stale copy.
+request_of() {
+  local run_dir=$1 target=$2
   local state_file="$run_dir/state.json" wf="$run_dir/workflow.yml"
-  local run_id status step paused_at
-  run_id=$(jq -r '.run_id' "$state_file")
+  local status step input="" answer_file=""
   status=$(jq -r '.status' "$state_file")
   step=$(jq -r '.current_step_id // "-"' "$state_file")
-  paused_at=$(jq -r '.updated_at' "$state_file")
-
   case "$status" in paused|failed|completed) ;; *) return 0 ;; esac
-  # A rewind writes "failed" a moment before the engine restarts, so a failure
-  # is only worth announcing once it has survived a tick.
-  [ "$status" = failed ] \
-    && [ $(( $(date +%s) - $(stat -c %Y "$state_file") )) -lt "$TICK" ] && return 0
-
-  local id; id=$(request_id "$target" "$run_id" "$step" "$paused_at")
-  [ -e "$STATE/requests/$id.json" ] && return 0
-  [ -e "$STATE/done/$id.json" ] && return 0
-
-  local tree="$PROJECTS/$target" input="" answer_file="" req
-  req=$(mktemp)
-  case "$status" in
-  paused)
+  if [ "$status" = paused ]; then
     input=$(gate_field "$wf" "$step" verdict_input)
     answer_file=$(gate_field "$wf" "$step" answer_file)
-    jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
-          --arg run "$run_id" --arg step "$step" --arg input "$input" \
-          --arg answer_file "$answer_file" \
-          --arg tree "$tree" --slurpfile s "$state_file" \
-      '{id: $id, kind: "gate", target: $target, project: $project,
-        run_id: $run, step: $step, input: $input, tree: $tree,
-        answer_file: $answer_file,
-        question: ($s[0].step_results[$step].output.message // "?"),
-        options: ($s[0].step_results[$step].output.options // []),
-        attachment: ($s[0].step_results[$step].output.show_file // null)}' > "$req"
-    ;;
-  failed)
-    jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
-          --arg run "$run_id" --arg step "$step" --arg tree "$tree" \
-          --slurpfile s "$state_file" \
-      '{id: $id, kind: "failure", target: $target, project: $project,
-        run_id: $run, step: $step, input: "", tree: $tree, answer_file: "",
-        question: ("Run en échec\n\nLe run s'\''est arrêté à l'\''étape `" + $step + "` :\n\n> "
-                   + ($s[0].error // "aucune raison enregistrée")),
-        options: [], attachment: null}' > "$req"
-    ;;
-  # A run that reaches the end says so once, with whatever the push left on
-  # stdout: nothing else on the machine ever mentions the pull request again.
-  completed)
-    jq -n --arg id "$id" --arg target "$target" --arg project "$project" \
-          --arg run "$run_id" --arg step "$step" --arg tree "$tree" \
-          --slurpfile s "$state_file" \
-      '{id: $id, kind: "done", target: $target, project: $project,
-        run_id: $run, step: $step, input: "", tree: $tree, answer_file: "",
-        question: ("Run terminé\n\n"
-                   + (($s[0].step_results["do-open-pr"].output.stdout // "")
-                      | sub("\\s+$"; "")
-                      | if . == "" then "Rien n'\''est parti : la branche est restée sur la machine."
-                        else . end)),
-        options: [], attachment: null}' > "$req"
-    ;;
-  esac
-
-  local handle
-  handle=$(channel notify "$req") || { rm -f "$req"; echo "notify failed for $id" >&2; return 0; }
-  jq --arg h "$handle" '. + {handle: $h}' "$req" > "$STATE/requests/$id.json"
-  rm -f "$req"
-  echo "asked     $id"
+  fi
+  jq --arg target "$target" --arg tree "$PROJECTS/$target" \
+     --arg input "$input" --arg answer_file "$answer_file" '
+    .current_step_id as $step
+    | {kind: ({paused: "gate", failed: "failure", completed: "done"}[.status]),
+       target: $target, run_id, step: ($step // "-"), tree: $tree,
+       input: $input, answer_file: $answer_file, paused_at: .updated_at,
+       title: (if .status == "paused"
+               then (.step_results[$step].output.message // "?") | split("\n")[0]
+               elif .status == "failed" then "Run en échec"
+               else "Run terminé" end),
+       options: (.step_results[$step].output.options // []),
+       # The push leaves the pull request on stdout; nothing else names it.
+       url: ((.step_results["do-open-pr"].output.stdout // "")
+             | [scan("https://\\S+")] | last // "")}' "$state_file"
 }
 
-apply() {
-  local req=$1
-  local kind answer
-  kind=$(jq -r '.kind' "$req")
+announce() {
+  local run_dir=$1 target=$2
+  local state_file="$run_dir/state.json" req
+  req=$(request_of "$run_dir" "$target")
+  [ -n "$req" ] || return 0
+  # A rewind writes "failed" a moment before the engine restarts, so a failure
+  # is only worth saying once it has survived a tick.
+  [ "$(jq -r .kind <<< "$req")" = failure ] \
+    && [ $(( $(date +%s) - $(stat -c %Y "$state_file") )) -lt "$TICK" ] && return 0
 
-  # Neither a failure nor a completion has anything to answer: each was said
-  # once, and that is all.
-  case "$kind" in failure|done) mv "$req" "$STATE/done/"; return 0 ;; esac
+  local id
+  id=$(request_id "$target" "$(jq -r .run_id <<< "$req")" \
+                  "$(jq -r .step <<< "$req")" "$(jq -r .paused_at <<< "$req")")
+  [ -e "$STATE/done/$id.json" ] && return 0
 
-  answer=$(channel poll "$req" || true)
-  [ -n "$answer" ] || return 0
-
-  apply_answer "$req" "$answer"
+  jq --arg id "$id" '. + {id: $id}' <<< "$req" > "$STATE/done/$id.json"
+  channel notify "$STATE/done/$id.json" >/dev/null \
+    || { rm -f "$STATE/done/$id.json"; echo "notify failed for $id" >&2; return 0; }
+  echo "notified  $id"
 }
 
-# The channel is only where an answer comes from. Everything that makes it an
-# answer happens here, so `gateway reply` and a Slack thread are checked alike.
+# Everything that makes a reply an answer happens here, whoever typed it.
 apply_answer() {
   local req=$1 answer=$2
-  local id options choice input target run tree step
-  id=$(jq -r '.id' "$req")
-
+  local options choice input target run tree
   target=$(jq -r '.target' "$req"); run=$(jq -r '.run_id' "$req")
-  tree=$(jq -r '.tree' "$req"); step=$(jq -r '.step' "$req")
-  # The run must still be waiting on this very step. Checking only that it is
-  # paused would let a stale answer be applied to whatever gate came next.
-  local live
-  live=$(jq -r '.status + " " + (.current_step_id // "-")' \
-         "$tree/.specify/workflows/runs/$run/state.json")
-  [ "$live" = "paused $step" ] || {
-    echo "refused   $id: the run is now '$live', not paused on $step" >&2
-    mv "$req" "$STATE/done/"; return 0; }
+  tree=$(jq -r '.tree' "$req")
 
   options=$(jq -r '.options[]' "$req")
   choice=$(printf %s "$answer" | tr -d '[:space:]')
@@ -182,81 +134,58 @@ apply_answer() {
     local file dir
     file=$(jq -r '.answer_file // empty' "$req")
     [ -n "$file" ] || {
-      echo "refused   $id: '$choice' is not one of the offered options" >&2; return 0; }
+      echo "refused   '$choice' is not one of: $(tr '\n' ' ' <<< "$options")" >&2; return 1; }
     [ "${#answer}" -le "$MAX_ANSWER" ] || {
-      echo "refused   $id: the answer is longer than $MAX_ANSWER characters" >&2; return 0; }
+      echo "refused   the answer is longer than $MAX_ANSWER characters" >&2; return 1; }
     dir="$tree/.specify/state/$run"
     mkdir -p "$dir"
     printf '%s\n' "$answer" > "$dir/$file"
     # The gate still needs one of its own words, and the first is the one that
     # carries on; a gate offering prose never has a reject in that position.
     choice=$(head -1 <<< "$options")
-    echo "written   $id  $dir/$file"
+    echo "written   $dir/$file"
   fi
 
   input=$(jq -r '.input' "$req")
-  [ -n "$input" ] || { echo "refused   $id: the gate declares no verdict_input" >&2; return 0; }
+  [ -n "$input" ] || { echo "refused   the gate declares no verdict_input" >&2; return 1; }
 
   agent answer "$target" "$run" "$input=$choice" >/dev/null
-  mv "$req" "$STATE/done/"
-  echo "answered  $id  $input=$choice"
+  echo "answered  $target $run  $input=$choice"
 }
 
-# Answering from the machine instead of the channel. The question must already
-# have been announced: the request holds which input carries the answer and
-# which options the gate offers, and nothing else knows.
 reply() {
   local target=${1:?missing project/branch} run=${2:?missing run_id}
   shift 2
   local answer="$*"
   [ -n "$answer" ] || { echo "nothing to reply" >&2; exit 1; }
-  local req
-  for req in "$STATE/requests"/*.json; do
-    [ -f "$req" ] || continue
-    [ "$(jq -r --arg t "$target" --arg r "$run" \
-         'select(.target == $t and .run_id == $r) | .id' "$req")" ] || continue
-    apply_answer "$req" "$answer"
-    return 0
-  done
-  echo "no question outstanding for $target $run; the next scan announces it" >&2
-  exit 1
+  local run_dir="$PROJECTS/$target/.specify/workflows/runs/$run"
+  [ -f "$run_dir/state.json" ] || { echo "no such run: $target $run" >&2; exit 1; }
+  local req; req=$(mktemp)
+  request_of "$run_dir" "$target" > "$req"
+  [ "$(jq -r '.kind // empty' "$req" 2>/dev/null)" = gate ] || {
+    rm -f "$req"; echo "$target $run is not paused on a gate" >&2; exit 1; }
+  apply_answer "$req" "$answer" || { rm -f "$req"; exit 1; }
+  rm -f "$req"
 }
 
 scan() {
-  local tree project target
+  local tree target run_dir
   for tree in "$PROJECTS"/*/*/; do
     [ -d "$tree/.specify/workflows/runs" ] || continue
-    project=$(basename "$(dirname "$tree")")
-    target="$project/$(basename "$tree")"
-    local run_dir
+    target="$(basename "$(dirname "$tree")")/$(basename "$tree")"
     for run_dir in "$tree"/.specify/workflows/runs/*/; do
       [ -f "$run_dir/state.json" ] || continue
-      announce "${run_dir%/}" "$target" "$project" \
+      announce "${run_dir%/}" "$target" \
         || echo "announce failed for $target $(basename "$run_dir")" >&2
     done
   done
-  local req
-  for req in "$STATE/requests"/*.json; do
-    [ -f "$req" ] || continue
-    apply "$req" || echo "apply failed for $(basename "$req" .json)" >&2
-  done
   # The only sweep of every run on this machine, so it carries the bookkeeping
-  # too. A failure here must not cost the questions their pass.
+  # too. A failure here must not cost the messages their pass.
   record scan || echo "record scan failed" >&2
-}
-
-status() {
-  local req
-  for req in "$STATE/requests"/*.json; do
-    [ -f "$req" ] || { echo "nothing outstanding"; return 0; }
-    jq -r '"\(.id)  \(.kind)  \(.options | join("/"))"' "$req"
-  done
 }
 
 case ${1:-} in
   scan)   scan ;;
-  run)    while :; do scan; sleep "$TICK"; done ;;
-  status) status ;;
   reply)  shift; reply "$@" ;;
   *)      usage ;;
 esac

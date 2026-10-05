@@ -1,97 +1,96 @@
 #!/usr/bin/env bash
-# Runs `gateway reply` against a fake worktree and a stub agent: what it
-# accepts, what it writes, what it refuses. No engine, no channel, no network.
+# Runs the gateway against a fake worktree and a stub agent: what `reply`
+# accepts, writes and refuses, and what `scan` says, once. No engine, no
+# network.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
-mkdir -p "$T/bin" "$T/state/requests" "$T/state/done"
+mkdir -p "$T/bin"
 
-tree="$T/projects/proj/branch"
-mkdir -p "$tree/.specify/workflows/runs/r1"
+run="$T/projects/proj/branch/.specify/workflows/runs/r1"
+mkdir -p "$run"
 
 cat > "$T/bin/agent" <<'STUB'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$CALLED"
 STUB
-chmod +x "$T/bin/agent"
+printf '#!/usr/bin/env bash\n' > "$T/bin/record"
+chmod +x "$T/bin/agent" "$T/bin/record"
 
 export PATH="$T/bin:$PATH" CALLED="$T/called"
 export AGENT_GATEWAY_STATE="$T/state" AGENT_PROJECTS="$T/projects"
+export AGENT_GATEWAY_CHANNEL=file
+
+# The gate declares where its answer goes; the engine records what it asked.
+workflow() {
+  {
+    echo 'steps:'
+    echo '  - id: ship-gate'
+    echo '    type: gate'
+    [ -n "${1:-}" ] && echo "    answer_file: $1"
+    echo '    verdict_input: ship_verdict'
+  } > "$run/workflow.yml"
+}
 
 paused_on() {
   jq -n --arg s "$1" '{run_id: "r1", status: "paused", current_step_id: $s,
-                       updated_at: "2026-09-22T06:00:00+00:00", step_results: {}}' \
-    > "$tree/.specify/workflows/runs/r1/state.json"
-}
-
-request() {
-  jq -n --arg tree "$tree" --arg f "${1:-}" \
-    '{id: "proj_branch__r1__ship-gate__1790", kind: "gate",
-      target: "proj/branch", project: "proj", run_id: "r1", step: "ship-gate",
-      input: "ship_verdict", tree: $tree, answer_file: $f,
-      question: "Prêt à livrer", options: ["push", "reject"], attachment: null,
-      handle: "1790000000.000100"}' \
-    > "$T/state/requests/proj_branch__r1__ship-gate__1790.json"
-  rm -f "$T/state/done"/*.json "$CALLED"
+      updated_at: "2026-09-22T06:00:00+00:00",
+      step_results: {($s): {output: {message: "Prêt à livrer\n\nle détail",
+                                     options: ["push", "reject"]}}}}' \
+    > "$run/state.json"
+  rm -f "$CALLED"
 }
 
 fail=0
 say() { echo "FAIL: $1" >&2; fail=1; }
 
 # An offered option reaches the run as the input the gate declares.
-paused_on ship-gate; request
+workflow; paused_on ship-gate
 bash "$HERE/gateway" reply proj/branch r1 push >/dev/null
 grep -qxF "answer proj/branch r1 ship_verdict=push" "$CALLED" \
   || say "the option was forwarded as '$(cat "$CALLED" 2>/dev/null)'"
-[ -f "$T/state/done/proj_branch__r1__ship-gate__1790.json" ] \
-  || say "the answered request stayed outstanding"
 
 # Prose is a file, never an argument, and the gate still gets one of its words.
-paused_on ship-gate; request ship-answer.md
+workflow ship-answer.md; paused_on ship-gate
 bash "$HERE/gateway" reply proj/branch r1 "pousse, mais sans la migration" >/dev/null
 grep -qxF "answer proj/branch r1 ship_verdict=push" "$CALLED" \
   || say "a written answer did not carry the gate's first option"
-grep -qF "sans la migration" "$tree/.specify/state/r1/ship-answer.md" 2>/dev/null \
+grep -qF "sans la migration" "$T/projects/proj/branch/.specify/state/r1/ship-answer.md" 2>/dev/null \
   || say "the written answer was not left in the worktree"
 
 # A gate that asked for two words only gets two words.
-paused_on ship-gate; request
-bash "$HERE/gateway" reply proj/branch r1 "vas-y" >/dev/null 2>"$T/err"
-grep -qF "not one of the offered options" "$T/err" || say "prose was accepted by a gate that offers none"
+workflow; paused_on ship-gate
+if bash "$HERE/gateway" reply proj/branch r1 "vas-y" >/dev/null 2>"$T/err"; then
+  say "prose was accepted by a gate that offers none"
+fi
+grep -qF "not one of" "$T/err" || say "the refusal does not name the options"
 [ -s "$CALLED" ] && say "the run was answered anyway"
 
-# The run must still be waiting on the very step the question came from.
-paused_on other-gate; request
-bash "$HERE/gateway" reply proj/branch r1 push >/dev/null 2>"$T/err"
-grep -qF "not paused on ship-gate" "$T/err" || say "a stale answer was applied"
-[ -s "$CALLED" ] && say "the moved-on run was answered anyway"
-
-# Nothing announced, nothing to answer: the menu must not invent a question.
-rm -f "$T/state/requests"/*.json
+# A run that is not waiting has nothing to answer.
+jq '.status = "running"' "$run/state.json" > "$T/s" && mv "$T/s" "$run/state.json"
 if bash "$HERE/gateway" reply proj/branch r1 push 2>"$T/err"; then
-  say "reply succeeded with no outstanding question"
+  say "a running run was answered"
 fi
-grep -qF "no question outstanding" "$T/err" || say "reply was silent about the missing question"
+grep -qF "not paused on a gate" "$T/err" || say "reply was silent about the run not waiting"
 
-# A run that reaches the end is announced once, through the channel that needs
-# no network, and has nothing left to answer.
-export AGENT_GATEWAY_CHANNEL=file AGENT_RECORD_STATE="$T/record"
-rm -f "$T/state/requests"/*.json "$T/state/done"/*.json
+# A pause is said once, with its title, however many passes see it.
+workflow; paused_on ship-gate
+bash "$HERE/gateway" scan >/dev/null
+bash "$HERE/gateway" scan >/dev/null
+[ "$(grep -c 'Prêt à livrer' "$T/state/inbox.md")" = 1 ] \
+  || say "the pause was said $(grep -c 'Prêt à livrer' "$T/state/inbox.md") times"
+grep -qF "le détail" "$T/state/inbox.md" && say "more than the title was sent"
+
+# A run that reaches the end names its pull request.
 jq -n '{run_id: "r1", status: "completed", current_step_id: "do-open-pr",
         updated_at: "2026-09-22T07:00:00+00:00",
-        step_results: {"do-open-pr": {output: {stdout: "https://example.test/pr/1\n"}}}}' \
-  > "$tree/.specify/workflows/runs/r1/state.json"
-bash "$HERE/gateway" scan >/dev/null 2>&1
-grep -qF "https://example.test/pr/1" "$T/state/inbox.md" \
-  || say "the finished run was not announced"
-ls "$T/state/done"/*.json >/dev/null 2>&1 \
-  || say "the announcement stayed outstanding with nothing to answer"
-
-: > "$T/state/inbox.md"
-bash "$HERE/gateway" scan >/dev/null 2>&1
-[ -s "$T/state/inbox.md" ] && say "the finished run was announced a second time"
+        step_results: {"do-open-pr": {output: {stdout: "branch set up\nhttps://example.test/pr/1\n"}}}}' \
+  > "$run/state.json"
+bash "$HERE/gateway" scan >/dev/null
+grep -qF "Run terminé  https://example.test/pr/1" "$T/state/inbox.md" \
+  || say "the finished run was not announced with its pull request"
 
 [ "$fail" = 0 ] && echo "ok"
 exit "$fail"

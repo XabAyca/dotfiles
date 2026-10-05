@@ -31,7 +31,7 @@ inputs:
     type: number
     default: 2
   # Every gate carries a verdict_input: without one, a gate can only be
-  # answered at a real terminal, which rules out the supervisor and Slack.
+  # answered at a real terminal, which rules out `agent menu`.
   decision_verdict:
     type: string
     enum: ["", approve, reject]
@@ -120,7 +120,7 @@ steps:
     then:
       - id: decision-gate
         type: gate
-        message: "Avant le code\n\nRien n'a encore été codé. Ci-dessous : les hypothèses prises sur la spec, les constats de l'analyse, les tâches que seul un humain peut faire, puis le plan.\n\n*Répondre dans ce fil :*\n• `approve` — je construis ça ; je tranche moi-même chaque constat ouvert et je note chaque choix dans le plan\n• `reject` — le run s'arrête ici\n• _du texte libre_ — tes décisions, tes corrections du plan et tes réponses aux tâches humaines, que j'applique telles quelles avant de construire"
+        message: "Avant le code\n\nRien n'a encore été codé. Ci-dessous : les hypothèses prises sur la spec, les constats de l'analyse, les tâches que seul un humain peut faire, puis le plan.\n\n*Répondre avec `agent menu` :*\n• `approve` — je construis ça ; je tranche moi-même chaque constat ouvert et je note chaque choix dans le plan\n• `reject` — le run s'arrête ici\n• _du texte libre_ — tes décisions, tes corrections du plan et tes réponses aux tâches humaines, que j'applique telles quelles avant de construire"
         show_file: ".specify/state/{{ context.run_id }}/decision.md"
         # Not an engine key: it ignores this one and keeps it in the copy it
         # freezes, which is where the gateway reads it.
@@ -247,7 +247,7 @@ steps:
 
   - id: ship-gate
     type: gate
-    message: "{{ steps.ship-summary.output.stdout }}\n\nTout est commité sur la branche ; le récapitulatif est ci-dessous.\n\n*Répondre dans ce fil :*\n• `push` — je pousse et j'ouvre une PR en draft\n• `reject` — ça reste sur la machine\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
+    message: "{{ steps.ship-summary.output.stdout }}\n\nTout est commité sur la branche ; le récapitulatif est ci-dessous.\n\n*Répondre avec `agent menu` :*\n• `push` — je pousse et j'ouvre une PR en draft\n• `reject` — ça reste sur la machine\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
     show_file: ".specify/state/{{ context.run_id }}/ship.md"
     options: [push, reject]
     # skip only skips the gate itself: the rejection must be carried over

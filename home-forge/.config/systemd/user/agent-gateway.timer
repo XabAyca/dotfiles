@@ -1,5 +1,5 @@
 [Unit]
-Description=Look for questions waiting on a human
+Description=Look for agent runs that want looking at
 
 [Timer]
 OnBootSec=1min

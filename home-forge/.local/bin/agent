@@ -317,7 +317,10 @@ menu() {
 
   local actions
   case $status in
-    paused)  actions=$'answer approve\nanswer reject\nanswer in plain text\nretry\nattach\nstop' ;;
+    # The gate's own words: a ship gate offers push, not approve.
+    paused)  actions=$(jq -r '.step_results[.current_step_id].output.options[]? | "answer " + .' \
+                         "$PROJECTS/$target/.specify/workflows/runs/$run/state.json")
+             actions+=$'\nanswer in plain text\nretry\nattach\nstop' ;;
     running) actions=$'attach\nstop' ;;
     failed)  actions=$'resume\nretry\nattach\nstop\ndone' ;;
     *)       actions=$'attach\nretry\nrecord\ndone' ;;
@@ -328,12 +331,11 @@ menu() {
     | fzf --prompt="< $target  $step > " --height=40% --reverse --no-sort) || return 0
 
   case $action in
-    'answer approve')       "$GATEWAY" reply "$target" "$run" approve ;;
-    'answer reject')        "$GATEWAY" reply "$target" "$run" reject ;;
     'answer in plain text')
       local text
       read -r -p 'answer: ' text
       if [ -n "$text" ]; then "$GATEWAY" reply "$target" "$run" "$text"; fi ;;
+    answer\ *)  "$GATEWAY" reply "$target" "$run" "${action#answer }" ;;
     attach)
       # Nesting a session inside another is refused; from a pane, move to it.
       if [ -n "${TMUX:-}" ]; then tmux switch-client -t "$target"
