@@ -61,6 +61,14 @@ out=$(bash "$HERE/open-pr.sh" r1)
 [ "$(cat .specify/state/r1/pr-body.md)" = "$(printf -- '- :sparkles: add a thing\n- :memo: describe it')" ] \
   || { echo "FAIL: the body is not the commit list: $(cat .specify/state/r1/pr-body.md)" >&2; fail=1; }
 
+# What only a person can do reaches the pull request, after the summary.
+printf -- '- [x] T001 done\n- [ ] T061 [HUMAN] check it by hand\n' > specs/001-x/tasks.md
+out=$(bash "$HERE/open-pr.sh" r1)
+grep -qF -- '- [ ] T061 [HUMAN] check it by hand' .specify/state/r1/pr-body.md \
+  || { echo "FAIL: the open [HUMAN] task is not in the body" >&2; fail=1; }
+grep -qF 'T001' .specify/state/r1/pr-body.md && { echo "FAIL: a done task is in the body" >&2; fail=1; }
+rm specs/001-x/tasks.md
+
 # A template the step before filled is the body, as written.
 mkdir -p .github
 echo '## Summary' > .github/PULL_REQUEST_TEMPLATE.md

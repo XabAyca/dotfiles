@@ -17,6 +17,10 @@ body="${state}/pr-body.md"
 if [ -z "$(bash "$(dirname "$0")/pr-template.sh")" ] || [ ! -s "$body" ]; then
   git log --reverse --format='- %s' "origin/${base}..HEAD" > "$body"
 fi
+human=$(grep -E '^[[:space:]]*- \[ \].*\[HUMAN\]' "${feature_dir}/tasks.md" 2>/dev/null || true)
+if [ -n "$human" ]; then
+  printf '\n**Left for a person**\n\n%s\n' "$(sed 's/^[[:space:]]*//' <<< "$human")" >> "$body"
+fi
 
 # What the review said goes to a pull request shipped again, as a comment.
 comment="${state}/pr-comment.md"

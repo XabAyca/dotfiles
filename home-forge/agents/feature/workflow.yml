@@ -300,7 +300,7 @@ steps:
             integration: "{{ inputs.integration }}"
             model: "sonnet"
             timeout: 900
-            prompt: "Fill in the pull request template {{ steps.pr-template.output.stdout }} for this branch and write the result to .specify/state/{{ context.run_id }}/pr-body.md. Keep its headings and their order. Answer each section from the spec, the plan, the commits on this branch and .specify/state/{{ context.run_id }}/review.json. Tick a checklist item only when this run did it. Leave a section you cannot answer, a ticket link for one, as the template has it. Write in the language of the template. Change no other file and run no git command that changes anything."
+            prompt: "Fill in the pull request template {{ steps.pr-template.output.stdout }} for this branch and write the result to .specify/state/{{ context.run_id }}/pr-body.md. Keep its headings and their order. Answer each section from the spec, the plan, the commits on this branch and .specify/state/{{ context.run_id }}/review.json. Tick a checklist item only when this run did it. Leave a section you cannot answer, a ticket link for one, as the template has it. Leave out the unchecked [HUMAN] tasks: they are appended after it. Write in the language of the template. Change no other file and run no git command that changes anything."
 
       - id: do-open-pr
         type: shell
