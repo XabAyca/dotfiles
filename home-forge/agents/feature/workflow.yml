@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.20.0"
+  version: "0.21.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -97,17 +97,23 @@ steps:
     run: 'bash $HOME/agents/feature/scripts/produced.sh tasks'
 
   # /speckit-analyze is read-only by design, so the step that runs it records
-  # the outcome where a script can read it.
-  - id: analyze
-    type: prompt
-    integration: "{{ inputs.integration }}"
-    model: "sonnet"
-    timeout: 1800
-    prompt: "Run /speckit-analyze. Then write .specify/state/{{ context.run_id }}/analyze.json containing raw JSON with no markdown fence: {\"critical\": <count>, \"high\": <count>, \"summary\": \"one line\", \"findings\": [\"one line each\"]}. Counts come from the severity column of the report. Change nothing else."
+  # the outcome where a script can read it. A record the script cannot read
+  # goes back to the step once, with the reason, before it stops the run.
+  - id: analyze-loop
+    type: do-while
+    max_iterations: 2
+    condition: "{{ steps.decision.output.stdout == 'REPAIR' }}"
+    steps:
+      - id: analyze
+        type: prompt
+        integration: "{{ inputs.integration }}"
+        model: "sonnet"
+        timeout: 1800
+        prompt: "Run /speckit-analyze. Then write .specify/state/{{ context.run_id }}/analyze.json containing raw JSON with no markdown fence: {\"critical\": <count>, \"high\": <count>, \"summary\": \"one line\", \"findings\": [\"one line each\"]}. Counts come from the severity column of the report. If .specify/state/{{ context.run_id }}/repair.md exists, your last analyze.json was rejected for the reason it gives. Change nothing else."
 
-  - id: decision
-    type: shell
-    run: 'bash $HOME/agents/feature/scripts/decision.sh {{ context.run_id }}'
+      - id: decision
+        type: shell
+        run: 'bash $HOME/agents/feature/scripts/check.sh {{ context.run_id }} decision bash $HOME/agents/feature/scripts/decision.sh {{ context.run_id }}'
 
   # The one stop before code, the last place a wrong direction is cheap. A
   # gate speaks to a human, so it speaks French — and in one shape: the first
@@ -177,21 +183,35 @@ steps:
             input:
               args: "{{ inputs.spec }}\n\nIf you stop with tasks still unchecked, write .specify/state/{{ context.run_id }}/blocked.md: for each one, what blocks it and the question a person must answer. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
 
-  # A run implement gave up on stops here; incomplete.md says why.
+  # What implement gave up on goes back to it once, with its own reasons; a
+  # task only a person can do is marked so and left for the ship gate. Only a
+  # second give-up stops the run.
   - id: implement-blocked
     type: if
     condition: "{{ steps.converged.output.stdout == 'BLOCKED' }}"
     then:
-      - id: implemented
-        type: shell
-        run: 'bash $HOME/agents/feature/scripts/implemented.sh'
+      - id: repair-implement
+        type: do-while
+        max_iterations: 2
+        condition: "{{ steps.implemented.output.stdout == 'REPAIR' }}"
+        steps:
+          - id: implement-open
+            command: speckit.implement
+            integration: "{{ inputs.integration }}"
+            input:
+              args: "{{ inputs.spec }}\n\nRead .specify/state/{{ context.run_id }}/incomplete.md and, if it exists, repair.md: the tasks a previous pass left unchecked and why. Finish every one that needs no person. One that truly does — a decision nobody has recorded, a check outside this repository — gets [HUMAN] right after its id and the question it waits on, and stays unchecked. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
+
+          - id: implemented
+            type: shell
+            run: 'bash $HOME/agents/feature/scripts/check.sh {{ context.run_id }} implemented bash $HOME/agents/feature/scripts/implemented.sh'
 
   # Quality, by us. Spec Kit says whether everything was built; these say
   # whether it was built well. What they leave standing goes to the ship gate,
   # not to a gate of its own: that is where a person reads how the run went.
+  # REPAIR is a review that wrote no verdict: it runs again, and costs no fix.
   - id: review-loop
     type: do-while
-    condition: "{{ steps.verdict.output.stdout == 'RETRY' }}"
+    condition: "{{ steps.verdict.output.stdout == 'RETRY' or steps.verdict.output.stdout == 'REPAIR' }}"
     steps:
       # Side by side: only review-feature runs the tests, and each writes its
       # own verdict file.
@@ -208,7 +228,7 @@ steps:
 
       - id: verdict
         type: shell
-        run: 'bash $HOME/agents/feature/scripts/verdict.sh {{ context.run_id }} {{ inputs.max_fix }}'
+        run: 'bash $HOME/agents/feature/scripts/check.sh {{ context.run_id }} verdict bash $HOME/agents/feature/scripts/verdict.sh {{ context.run_id }} {{ inputs.max_fix }}'
 
       - id: fix
         type: if

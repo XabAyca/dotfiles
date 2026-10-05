@@ -12,6 +12,11 @@ status_of() {
   jq -re '.status' "$file"
 }
 
+# Read at the end, not from implement's own report: a repaired pass has
+# checked some of what that report lists, and marked the rest [HUMAN].
+feature_dir=$(jq -re '.feature_directory' .specify/feature.json 2>/dev/null || true)
+open=$(grep -E '^[[:space:]]*- \[ \]' "${feature_dir}/tasks.md" 2>/dev/null || true)
+
 review=$(status_of review)
 ui=$(status_of ui)
 passed=yes
@@ -32,11 +37,13 @@ fi
     echo
     echo "**Les reviews ne sont pas passées. Lire les verdicts avant de pousser.**"
   fi
-  for f in incomplete converge; do
-    [ -f "${state}/${f}.md" ] || continue
+  if [ -n "$open" ]; then
+    printf '\n## Tâches encore ouvertes\n\n%s\n' "$open"
+  fi
+  if [ -f "${state}/converge.md" ]; then
     echo
-    sed 's/^# /## /' "${state}/${f}.md"
-  done
+    sed 's/^# /## /' "${state}/converge.md"
+  fi
   for f in review ui; do
     [ -f "${state}/${f}.json" ] || continue
     echo
