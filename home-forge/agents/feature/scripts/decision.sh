@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Gathers everything a person must see before code is written into the one
 # file the decision gate shows. /speckit.analyze is read-only, so the prompt
-# step that runs it writes analyze.json. Prints CLEAR when there is nothing to
-# decide, REVIEW otherwise.
+# step that runs it writes analyze.json. Prints REVIEW when only a person can
+# settle something — a critical finding, a [HUMAN] task, a feature too big —
+# and CLEAR otherwise: apply-decision settles assumptions and high findings
+# itself and records each choice in the plan.
 set -euo pipefail
 
 run_id=${1:?missing run_id}
@@ -46,7 +48,7 @@ if [ "$human_count" -gt "$max_human" ]; then too_big=yes; fi
 } > "${state}/decision.md"
 
 # A count the analysis left out is not a zero.
-if [ -z "$assumed$human$too_big" ] && jq -e '.critical == 0 and .high == 0' "$file" >/dev/null; then
+if [ -z "$human$too_big" ] && jq -e '.critical == 0 and (.high | type) == "number"' "$file" >/dev/null; then
   printf %s CLEAR
 else
   printf %s REVIEW

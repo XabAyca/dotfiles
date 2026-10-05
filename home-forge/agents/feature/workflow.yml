@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.23.0"
+  version: "0.24.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -90,7 +90,7 @@ steps:
     command: speckit.tasks
     integration: "{{ inputs.integration }}"
     input:
-      args: "{{ inputs.spec }}\n\nMark [HUMAN], right after the task id, every task only a person can do: a check outside this repository, a decision nobody has recorded yet. Each acceptance scenario of the spec gets a test task that walks it through the entry point a user or a caller uses — the route, the form, the job."
+      args: "{{ inputs.spec }}\n\nMark [HUMAN], right after the task id, every task only a person can do: a check outside this repository, a decision nobody has recorded yet. Confirming the spec's [ASSUMPTION]s, accepting a deviation the plan records, or validating the delivered feature by hand is not a task: the gate before the code and the pull request cover them. Each acceptance scenario of the spec gets a test task that walks it through the entry point a user or a caller uses — the route, the form, the job."
 
   - id: tasked
     type: shell

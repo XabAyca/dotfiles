@@ -40,8 +40,11 @@ sed -i 's/- \[ \] T001/- [x] T001/' specs/001/tasks.md
 bash "$HERE/decision.sh" r1 >/dev/null
 hidden 'T001 [HUMAN]' "a [HUMAN] task already answered is still shown"
 
+echo '{"critical": 0, "high": 2, "summary": "s", "findings": ["H1 a stale comment count"]}' > .specify/state/r1/analyze.json
+says CLEAR "assumptions and high findings, which apply-decision settles, asked for a person"
+shown 'ASSUMPTION: production runs in Europe/Paris' "a delegated assumption is no longer shown"
+shown '- H1 a stale comment count' "a delegated finding is no longer shown"
 echo '{"critical": 0, "high": 0, "summary": "s", "findings": []}' > .specify/state/r1/analyze.json
-says REVIEW "an assumption alone did not ask for a person"
 sed -i '/ASSUMPTION\|NEEDS CLARIFICATION/d' specs/001/spec.md
 says CLEAR "nothing to decide still asked for a person"
 echo '- [ ] T003 [HUMAN] call the bank' >> specs/001/tasks.md
