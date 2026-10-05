@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.22.0"
+  version: "0.23.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -285,6 +285,23 @@ steps:
     type: if
     condition: "{{ inputs.ship_verdict == 'push' or steps.ship-summary.output.stdout == 'Prêt à livrer' }}"
     then:
+      # Only an agent can fill the repository's own template. Without one,
+      # open-pr.sh lists the commits and no model is called.
+      - id: pr-template
+        type: shell
+        run: 'bash $HOME/agents/feature/scripts/pr-template.sh'
+
+      - id: fill-template
+        type: if
+        condition: "{{ steps.pr-template.output.stdout != '' }}"
+        then:
+          - id: pr-body
+            type: prompt
+            integration: "{{ inputs.integration }}"
+            model: "sonnet"
+            timeout: 900
+            prompt: "Fill in the pull request template {{ steps.pr-template.output.stdout }} for this branch and write the result to .specify/state/{{ context.run_id }}/pr-body.md. Keep its headings and their order. Answer each section from the spec, the plan, the commits on this branch and .specify/state/{{ context.run_id }}/review.json. Tick a checklist item only when this run did it. Leave a section you cannot answer, a ticket link for one, as the template has it. Write in the language of the template. Change no other file and run no git command that changes anything."
+
       - id: do-open-pr
         type: shell
         # A shell step defaults to 300s, and a push can outlast it after

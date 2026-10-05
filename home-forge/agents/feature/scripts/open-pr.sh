@@ -10,28 +10,22 @@ feature_dir=$(jq -re '.feature_directory' .specify/feature.json)
 title=$(sed -n '/^# /{s/^# [^:]*:[[:space:]]*//p;q}' "${feature_dir}/spec.md")
 base=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name)
 
-# Which workflow actually ran: the source, the worktree copy and the frozen
-# copy drift apart, and only the frozen one is what this branch went through.
-version=$(sed -n 's/^[[:space:]]*version:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' \
-          ".specify/workflows/runs/${run_id}/workflow.yml" | head -1)
-
-# Through a file: agent output is never interpolated into a command line.
+# Through files: agent output is never interpolated into a command line. The
+# body is the repository's template, filled by the step before; without one,
+# the commits this branch adds, one topic each already.
 body="${state}/pr-body.md"
-{
-  if [ -f "${state}/review.json" ]; then
-    # Says whether the bullets below summarise the change or list findings.
-    printf 'Review: %s\n\n' "$(jq -r '.status' "${state}/review.json")"
-    jq -r '.bullets[]? // empty | "- " + .' "${state}/review.json"
-  else
-    echo "- No review verdict was recorded for this branch."
-  fi
-  echo
-  echo "Spec: \`${feature_dir}/\`"
-  echo "Workflow: \`feature ${version:-?}\`, run \`${run_id}\`"
-  echo
-  echo "---"
-  echo "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
-} > "$body"
+if [ -z "$(bash "$(dirname "$0")/pr-template.sh")" ] || [ ! -s "$body" ]; then
+  git log --reverse --format='- %s' "origin/${base}..HEAD" > "$body"
+fi
+
+# What the review said goes to a pull request shipped again, as a comment.
+comment="${state}/pr-comment.md"
+if [ -f "${state}/review.json" ]; then
+  { printf 'Review: %s\n\n' "$(jq -r '.status' "${state}/review.json")"
+    jq -r '.bullets[]? // empty | "- " + .' "${state}/review.json"; } > "$comment"
+else
+  echo "- No review verdict was recorded for this branch." > "$comment"
+fi
 
 git push -u origin HEAD
 # A rewound run ships the same branch twice: the second time the push is the
@@ -39,7 +33,7 @@ git push -u origin HEAD
 open=$(gh pr list --head "$(git branch --show-current)" --state open --json url -q '.[].url')
 if [ -n "$open" ]; then
   echo "pushed to the open pull request: $open"
-  gh pr comment --body-file "$body"
+  gh pr comment --body-file "$comment"
 else
   gh pr create --draft --base "$base" --title "$title" --body-file "$body"
 fi

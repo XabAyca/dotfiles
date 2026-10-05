@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs open-pr.sh against stub git and gh, once with no pull request on the
-# branch and once with one already open. No network, no repository.
+# Runs open-pr.sh against stub git and gh: with and without a pull request on
+# the branch, with and without a template. No network, no repository.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
@@ -14,6 +14,7 @@ cat > "$T/bin/git" <<'STUB'
 #!/usr/bin/env bash
 case "$1 $2" in
   "branch --show-current") echo "001-x" ;;
+  "log --reverse")         printf -- '- :sparkles: add a thing\n- :memo: describe it\n' ;;
   *)                       echo "[git $*]" ;;
 esac
 STUB
@@ -54,6 +55,34 @@ expect "$out" yes  "[git push -u origin HEAD]"
 expect "$out" yes  "pushed to the open pull request: https://github.com/o/r/pull/42"
 expect "$out" yes  "[gh pr comment --body-file"
 expect "$out" no   "pr create"
+
+# No template: the commits are the summary, and nothing else is said.
+out=$(bash "$HERE/open-pr.sh" r1)
+[ "$(cat .specify/state/r1/pr-body.md)" = "$(printf -- '- :sparkles: add a thing\n- :memo: describe it')" ] \
+  || { echo "FAIL: the body is not the commit list: $(cat .specify/state/r1/pr-body.md)" >&2; fail=1; }
+
+# A template the step before filled is the body, as written.
+mkdir -p .github
+echo '## Summary' > .github/PULL_REQUEST_TEMPLATE.md
+[ "$(bash "$HERE/pr-template.sh")" = .github/PULL_REQUEST_TEMPLATE.md ] \
+  || { echo "FAIL: the template was not found" >&2; fail=1; }
+printf '## Summary\n\nAdds a thing.\n' > .specify/state/r1/pr-body.md
+out=$(bash "$HERE/open-pr.sh" r1)
+grep -qF 'Adds a thing.' .specify/state/r1/pr-body.md \
+  || { echo "FAIL: the filled template was replaced" >&2; fail=1; }
+
+# A template nobody filled still ships, with the commits.
+: > .specify/state/r1/pr-body.md
+out=$(bash "$HERE/open-pr.sh" r1)
+grep -qF -- '- :sparkles: add a thing' .specify/state/r1/pr-body.md \
+  || { echo "FAIL: an unfilled template left the body empty" >&2; fail=1; }
+
+# Elsewhere and in another case, GitHub still finds it.
+rm -r .github; mkdir docs; echo x > docs/pull_request_template.md
+[ "$(bash "$HERE/pr-template.sh")" = docs/pull_request_template.md ] \
+  || { echo "FAIL: a template in docs/ was not found" >&2; fail=1; }
+rm -r docs
+[ -z "$(bash "$HERE/pr-template.sh")" ] || { echo "FAIL: a template was found where there is none" >&2; fail=1; }
 
 [ "$fail" = 0 ] && echo "ok"
 exit "$fail"

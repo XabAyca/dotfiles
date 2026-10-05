@@ -213,6 +213,7 @@ retry() {
         "$tree/.specify/state/$run_id/ui.json" \
         "$tree/.specify/state/$run_id/attempts" \
         "$tree/.specify/state/$run_id/ship.md" \
+        "$tree/.specify/state/$run_id/pr-body.md" \
         "$tree/.specify/state/$run_id"/repair* \
         "$tree/.specify/state/$run_id"/*-answer.md
 
