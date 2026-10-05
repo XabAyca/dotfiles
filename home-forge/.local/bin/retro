@@ -11,7 +11,9 @@ DOTFILES=${AGENT_DOTFILES:-$HOME/projects/dotfiles/main}
 usage() {
   cat >&2 <<'USAGE'
 usage:
-  retro [n]   review the last n runs (default 10); writes the retro and prints its path
+  retro [--if-new] [n]   review the last n runs (default 10); writes the retro and prints its path
+                         --if-new: print nothing and call no model when no run has
+                         been recorded since the last retro
 USAGE
   exit 1
 }
@@ -46,10 +48,20 @@ Write in French, in Markdown:
 Change no file.'
 
 retro() {
+  local if_new=no
+  [ "${1:-}" = --if-new ] && { if_new=yes; shift; }
   local n=${1:-10}
   case $n in ''|*[!0-9]*) usage ;; esac
   [ -d "$RECORDS" ] || { echo "nothing recorded yet" >&2; exit 1; }
   mkdir -p "$OUT"
+
+  local last
+  # shellcheck disable=SC2012
+  last=$(ls -t "$OUT"/*.md 2>/dev/null | head -1 || true)
+  if [ "$if_new" = yes ] && [ -n "$last" ] \
+     && [ -z "$(find "$RECORDS" -name '*.json' -newer "$last")" ]; then
+    return 0
+  fi
 
   local bundle="$OUT/$(date +%F)-runs.json" f url sha items=()
   # shellcheck disable=SC2012

@@ -92,5 +92,10 @@ bash "$HERE/gateway" scan >/dev/null
 grep -qF "Run terminé  https://example.test/pr/1" "$T/state/inbox.md" \
   || say "the finished run was not announced with its pull request"
 
+# A message no run asked for goes through the same channel, with what to do.
+bash "$HERE/gateway" say "Bilan des runs prêt" "bat /tmp/x.md"
+tail -1 "$T/state/inbox.md" | grep -qF "Bilan des runs prêt  bat /tmp/x.md" \
+  || say "say did not reach the channel: $(tail -1 "$T/state/inbox.md")"
+
 [ "$fail" = 0 ] && echo "ok"
 exit "$fail"

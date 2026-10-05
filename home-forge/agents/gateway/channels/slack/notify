@@ -10,11 +10,13 @@ req=${1:?missing request}
 SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:?set SLACK_BOT_TOKEN in config.env}
 SLACK_CONVERSATION=${SLACK_CONVERSATION:?set SLACK_CONVERSATION in config.env}
 
-case "$(jq -r '.kind' "$req")" in failure) icon=🚨 ;; done) icon=✅ ;; *) icon=❓ ;; esac
+case "$(jq -r '.kind' "$req")" in failure) icon=🚨 ;; done) icon=✅ ;; info) icon=📊 ;; *) icon=❓ ;; esac
 
 text=$(jq -r --arg icon "$icon" '
-  "\($icon) *\(.title)* — `\(.target)` · étape `\(.step)`\n"
-  + (if .url != "" then .url else "À voir sur la machine : `agent menu`" end)' "$req")
+  "\($icon) *\(.title)*"
+  + (if .target != "" then " — `\(.target)` · étape `\(.step)`" else "" end) + "\n"
+  + (if .url != "" then .url elif (.next // "") != "" then .next
+     else "À voir sur la machine : `agent menu`" end)' "$req")
 
 auth=$(mktemp); trap 'rm -f "$auth"' EXIT
 # The token goes through a file: an argument is visible in `ps` to everything

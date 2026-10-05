@@ -1,0 +1,9 @@
+[Unit]
+Description=Review the agent runs once a week
+
+[Timer]
+OnCalendar=Mon *-*-* 08:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

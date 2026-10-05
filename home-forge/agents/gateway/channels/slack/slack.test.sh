@@ -47,6 +47,13 @@ jq '.kind = "failure" | .title = "Run en échec"' "$req" > "$T/fail.json"
 bash "$HERE/notify" "$T/fail.json"
 grep -q '^🚨 \*Run en échec\*' <<< "$(jq -r .text "$T/sent.json")" || say "a failure is not marked as one"
 
+# A message no run asked for names no run, and says what to do instead.
+jq -n '{kind: "info", title: "Bilan des runs prêt", next: "bat /tmp/x.md",
+        target: "", step: "", url: ""}' > "$T/info.json"
+bash "$HERE/notify" "$T/info.json"
+[ "$(jq -r .text "$T/sent.json")" = "$(printf '📊 *Bilan des runs prêt*\nbat /tmp/x.md')" ] \
+  || say "the info message reads '$(jq -r .text "$T/sent.json")'"
+
 # A refusal from Slack is a failure, not a message posted into the void.
 if FAKE_POST='{"ok":false,"error":"not_in_channel"}' bash "$HERE/notify" "$req" 2>"$T/err"; then
   say "notify succeeded on a Slack error"

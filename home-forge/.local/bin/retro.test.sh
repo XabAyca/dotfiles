@@ -53,5 +53,14 @@ grep -qx 'Edit' "$ARGS" && grep -qx -- '--disallowedTools' "$ARGS" \
 
 if bash "$HERE/retro" nope 2>/dev/null; then say "a bad count was accepted"; fi
 
+# Weekly, nothing new since the last retro means no model call and no path.
+rm -f "$SENT"
+out=$(bash "$HERE/retro" --if-new 2)
+[ -z "$out" ] || say "--if-new printed '$out' with nothing new"
+[ -e "$SENT" ] && say "--if-new called the model with nothing new"
+sleep 1; touch "$T/records/fixed.json"
+out=$(bash "$HERE/retro" --if-new 2)
+[ -f "$out" ] || say "--if-new skipped a run recorded since the last retro"
+
 [ "$fail" = 0 ] && echo "ok"
 exit "$fail"

@@ -40,6 +40,8 @@ usage:
   gateway scan     one pass: say once what is waiting, failed or finished
   gateway reply <project>/<branch> <run_id> <answer>
                    answer the gate a run is paused on
+  gateway say <title> [line]
+                   say something no run asked for, through the same channel
 USAGE
   exit 1
 }
@@ -168,6 +170,15 @@ reply() {
   rm -f "$req"
 }
 
+say() {
+  local title=${1:?missing title} line=${2:-} req
+  req=$(mktemp)
+  jq -n --arg title "$title" --arg next "$line" \
+    '{kind: "info", title: $title, next: $next, target: "", step: "", url: ""}' > "$req"
+  channel notify "$req" || { rm -f "$req"; exit 1; }
+  rm -f "$req"
+}
+
 scan() {
   local tree target run_dir
   for tree in "$PROJECTS"/*/*/; do
@@ -187,5 +198,6 @@ scan() {
 case ${1:-} in
   scan)   scan ;;
   reply)  shift; reply "$@" ;;
+  say)    shift; say "$@" ;;
   *)      usage ;;
 esac

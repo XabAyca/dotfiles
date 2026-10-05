@@ -1,0 +1,9 @@
+[Unit]
+Description=Review the last agent runs and say when the retro is ready
+
+[Service]
+Type=oneshot
+# claude -p only loads its tools in a trusted workspace.
+WorkingDirectory=%h/projects/dotfiles/main
+Environment=PATH=%h/.local/share/mise/shims:%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/bin/bash -c 'f=$$(retro --if-new) || exit 1; [ -z "$$f" ] || exec %h/agents/gateway/gateway say "Bilan des runs prêt" "bat $$f"'

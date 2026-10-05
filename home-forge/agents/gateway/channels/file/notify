@@ -8,4 +8,5 @@ STATE=${AGENT_GATEWAY_STATE:-$HOME/.local/state/agent-gateway}
 
 jq -r --arg now "$(date '+%Y-%m-%d %H:%M')" '
   "\($now)  \(.target)  \(.step)  \(.title)"
-  + (if .url != "" then "  " + .url else "" end)' "$req" >> "$STATE/inbox.md"
+  + (if .url != "" then "  " + .url else "" end)
+  + (if (.next // "") != "" then "  " + .next else "" end)' "$req" >> "$STATE/inbox.md"
