@@ -51,6 +51,26 @@ YML
 got=$(top_steps "$T/workflow.yml" | tr '\n' ' ')
 [ "$got" = "plan review-loop ship " ] || { echo "FAIL: top_steps gave '$got'" >&2; fail=1; }
 
+# retry clears what the steps it runs again rewrite, and keeps the rest.
+retry_from() {
+  local run=$T/projects/p/r/.specify/workflows/runs/r1 s=$T/projects/p/r/.specify/state/r1
+  mkdir -p "$run" "$s"
+  printf -- '- id: decision-gate\n  answer_file: decision-answer.md\n  verdict_input: decision_verdict\n- id: review-loop\n- id: ship-gate\n  verdict_input: ship_verdict\n' > "$run/workflow.yml"
+  echo '{"status":"completed","current_step_index":2,"current_step_id":"ship-gate"}' > "$run/state.json"
+  echo '{"inputs":{"decision_verdict":"approve","ship_verdict":"reject"}}' > "$run/inputs.json"
+  touch "$s/review.json" "$s/decision-answer.md" "$s/ship.md"
+  ( PROJECTS=$T/projects; idle_or_die() { :; }; in_tmux() { :; }; retry p/r r1 "$1" >/dev/null )
+}
+retry_from ship-gate
+s=$T/projects/p/r/.specify/state/r1
+[ -e "$s/review.json" ] || { echo "FAIL: a rewind past the review dropped its verdict" >&2; fail=1; }
+[ -e "$s/decision-answer.md" ] || { echo "FAIL: a rewind past the decision dropped its answer" >&2; fail=1; }
+[ -e "$s/ship.md" ] && { echo "FAIL: a rewind to the ship gate kept the old summary" >&2; fail=1; }
+[ "$(jq -r '.inputs | .decision_verdict + "/" + .ship_verdict' "$T/projects/p/r/.specify/workflows/runs/r1/inputs.json")" = approve/ ] \
+  || { echo "FAIL: the rewind cleared the wrong verdicts" >&2; fail=1; }
+retry_from review-loop
+[ -e "$s/review.json" ] && { echo "FAIL: a rewind to the review kept the old verdict" >&2; fail=1; }
+
 # A new worktree reads main's secrets through a link; one it already has stays.
 mkdir -p "$T/env/main" "$T/env/new" "$T/env/own"
 echo SECRET=1 > "$T/env/main/.env"

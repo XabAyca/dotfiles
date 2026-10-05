@@ -37,9 +37,11 @@ git -C "$tree" init -q && git -C "$tree" -c user.name=t -c user.email=t@t commit
 echo 'version: "0.22.0"' > "$run/workflow.yml"
 jq -n '{run_id: "r2", workflow_id: "feature", status: "completed", current_step_id: "do-open-pr",
         step_results: {"do-open-pr": {status: "completed",
-          output: {stdout: "branch set up\nhttps://github.com/o/r/pull/7\n"}}}}' > "$run/state.json"
+          output: {stdout: "branch set up\nhttps://github.com/o/r/pull/7\n"}},
+        "ship-summary": {output: {stdout: "Prêt à livrer"}}}}' > "$run/state.json"
 cp "$T/projects/proj/branch/.specify/workflows/runs/r1/log.jsonl" "$run/log.jsonl"
 echo '{"status":"DONE","summary":"s","bullets":["Note: plural label"]}' > "$tree/.specify/state/r2/review.json"
+echo '{"critical":0,"high":1,"summary":"s","findings":[]}' > "$tree/.specify/state/r2/analyze.json"
 echo '{"check":"decision","at":"2026-10-05T08:00:00+02:00","reason":"parse error\n"}' \
   > "$tree/.specify/state/r2/repairs.jsonl"
 
@@ -50,6 +52,9 @@ rec="$T/records/proj_shipped__r2.json"
 [ "$(jq -r '.repairs[0].check' "$rec")" = decision ] || say "the repairs were not kept"
 [ "$(jq -r '.review.bullets[0]' "$rec")" = "Note: plural label" ] || say "the review bullets were not kept"
 [ "$(jq -r '.repairs | length' "$T/records/proj_branch__r1.json")" = 0 ] || say "a run with no repair got some"
+[ "$(jq -r '.analysis.high' "$rec")" = 1 ] || say "the analysis counts were not kept"
+[ "$(jq -r '.ship_title' "$rec")" = "Prêt à livrer" ] || say "the ship gate title was not kept"
+[ "$(jq -r '.analysis' "$T/records/proj_branch__r1.json")" = null ] || say "a run with no analysis got one"
 
 [ "$fail" = 0 ] && echo "ok"
 exit "$fail"

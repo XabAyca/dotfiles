@@ -206,25 +206,24 @@ retry() {
     exit 1; }
   idle_or_die "$tree"
 
-  # The verdicts go with the rewind, so the next pass judges what now stands,
-  # and the written answers with them: a gate reached again reads its own file
-  # before anyone has replied, and would apply the last run's answer in silence.
-  rm -f "$tree/.specify/state/$run_id/review.json" \
-        "$tree/.specify/state/$run_id/ui.json" \
-        "$tree/.specify/state/$run_id/attempts" \
-        "$tree/.specify/state/$run_id/ship.md" \
-        "$tree/.specify/state/$run_id/pr-body.md" \
-        "$tree/.specify/state/$run_id"/repair* \
-        "$tree/.specify/state/$run_id"/*-answer.md
-
-  # A verdict_input holds its answer for the whole run and decides its gate
-  # without asking again, so a rewind that kept them would replay old
-  # decisions in silence. Only the gates from the rewind point are cleared.
-  local names tmp2
-  names=$(awk -v step="$step" '
+  # The steps the rewind runs again, nested ones included. What they write goes
+  # with it, so the next pass judges what now stands — and only that: a rewind
+  # past the review keeps its verdicts, which the record needs. A gate reached
+  # again reads its own answer file before anyone has replied, and a
+  # verdict_input decides its gate without asking: kept, either would replay
+  # an old decision in silence.
+  local again s="$tree/.specify/state/$run_id" f
+  again=$(awk -v step="$step" '
       $0 ~ "^[[:space:]]*-[[:space:]]*id:[[:space:]]*" step "[[:space:]]*$" { from = 1 }
-      from && /verdict_input:/ { sub(/.*verdict_input:[[:space:]]*/, ""); print }
-    ' "$dir/workflow.yml" | sort -u)
+      from' "$dir/workflow.yml")
+  rm -f "$s/ship.md" "$s/pr-body.md" "$s"/repair*
+  if grep -q 'id: review-loop' <<< "$again"; then
+    rm -f "$s/review.json" "$s/ui.json" "$s/attempts"
+  fi
+  for f in $(sed -n 's/.*answer_file:[[:space:]]*//p' <<< "$again"); do rm -f "$s/$f"; done
+
+  local names tmp2
+  names=$(sed -n 's/.*verdict_input:[[:space:]]*//p' <<< "$again" | sort -u)
   if [ -n "$names" ]; then
     tmp2=$(mktemp)
     jq --arg n "$names" \

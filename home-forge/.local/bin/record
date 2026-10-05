@@ -65,6 +65,10 @@ if length == 0 then empty else . end
      review: ($review[0] | if . then {status, summary, bullets} else null end),
      ui: ($ui[0] | if . then {status, summary, bullets} else null end),
      repairs: $repairs,
+     # What decided the two stops: the decision gate fires on the analysis, the
+     # ship gate on its own title.
+     analysis: ($analyze[0] | if . then {critical, high} else null end),
+     ship_title: ($s.step_results["ship-summary"].output.stdout // null),
      # What you told the run. It lives in the worktree and dies with it.
      answers: (if $answers == "" then null else $answers end),
      shipped: (($s.step_results["do-open-pr"].status // "") == "completed"),
@@ -115,6 +119,7 @@ record_run() {
      --slurpfile ui     <(cat "$feature_state/ui.json"     2>/dev/null || echo null) \
      --arg answers "$(cat "$feature_state"/*-answer.md 2>/dev/null || true)" \
      --slurpfile repairs <(cat "$feature_state/repairs.jsonl" 2>/dev/null || true) \
+     --slurpfile analyze <(cat "$feature_state/analyze.json" 2>/dev/null || echo null) \
      --arg sha "$(git -C "$tree" rev-parse HEAD 2>/dev/null || true)" \
      "$program" < <(jq -s '.' "$run_dir/log.jsonl") > "$tmp"
   mv "$tmp" "$out"
