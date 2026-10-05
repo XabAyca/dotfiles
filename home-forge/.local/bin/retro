@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# Reads what the last runs cost and what went wrong, and asks a model for the
+# few workflow changes the evidence supports. It only proposes: a person
+# decides, and applies a change only while no run is in flight.
+set -euo pipefail
+
+RECORDS=${AGENT_RECORD_STATE:-$HOME/.local/state/agent/runs}
+OUT=${AGENT_RETRO_STATE:-$HOME/.local/state/agent/retro}
+DOTFILES=${AGENT_DOTFILES:-$HOME/projects/dotfiles/main}
+
+usage() {
+  cat >&2 <<'USAGE'
+usage:
+  retro [n]   review the last n runs (default 10); writes the retro and prints its path
+USAGE
+  exit 1
+}
+
+# The commits a person added to the pull request after the one the run
+# pushed, and whether it was merged. Null when GitHub cannot say: a PR that
+# could not be read is not a PR nobody had to fix.
+pr_outcome() {
+  local url=$1 sha=$2 json
+  json=$(gh pr view "$url" --json commits,state 2>/dev/null) || { echo null; return 0; }
+  jq --arg sha "$sha" '
+    ([.commits[].oid] | index($sha)) as $i
+    | {state, fixed_after: (if $i == null then null else (.commits | length) - $i - 1 end)}' <<< "$json"
+}
+
+PROMPT='You are reviewing the last runs of the autonomous feature workflow. Their
+records are the JSON array on stdin: cost, steps, repairs (a check that sent a
+step back once, with its reason), gates and answers, review verdicts, failure
+reason, and for a shipped run the pull request with the commits a person added
+after it (pr.fixed_after). The workflow and its scripts are in
+home-forge/agents/feature, the skills in home-forge/.claude/skills: read them
+before proposing anything.
+
+Write in French, in Markdown:
+1. Figures per workflow version: runs, shipped, model and wall time, repairs
+   per check, gates asked, commits added by hand after the PR.
+2. What worked and what did not. Every claim cites the run_id that shows it.
+3. At most three changes, ranked by expected effect. Each gives the problem and
+   its evidence, the change (file and nature), and the figure it should move.
+   No proposal without evidence; data missing to decide is said as such.
+
+Change no file.'
+
+retro() {
+  local n=${1:-10}
+  case $n in ''|*[!0-9]*) usage ;; esac
+  [ -d "$RECORDS" ] || { echo "nothing recorded yet" >&2; exit 1; }
+  mkdir -p "$OUT"
+
+  local bundle="$OUT/$(date +%F)-runs.json" f url sha items=()
+  # shellcheck disable=SC2012
+  for f in $(ls -t "$RECORDS"/*.json 2>/dev/null | head -"$n"); do
+    url=$(jq -r '.pr_url // empty' "$f"); sha=$(jq -r '.shipped_sha // empty' "$f")
+    if [ -n "$url" ] && [ -n "$sha" ]; then
+      items+=("$(jq --argjson pr "$(pr_outcome "$url" "$sha")" '. + {pr: $pr}' "$f")")
+    else
+      items+=("$(jq '. + {pr: null}' "$f")")
+    fi
+  done
+  [ ${#items[@]} -gt 0 ] || { echo "nothing recorded yet" >&2; exit 1; }
+  printf '%s\n' "${items[@]}" | jq -s . > "$bundle"
+
+  local out="$OUT/$(date +%F).md"
+  # Read-only: a retro that edits the workflow is a change nobody approved.
+  (cd "$DOTFILES" && claude -p "$PROMPT" \
+     --allowedTools Read Grep Glob --disallowedTools Edit Write Bash < "$bundle") > "$out.tmp"
+  mv "$out.tmp" "$out"
+  echo "$out"
+}
+
+case ${1:-} in
+  -h|--help) usage ;;
+  *) retro "$@" ;;
+esac
