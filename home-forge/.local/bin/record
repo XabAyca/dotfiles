@@ -67,6 +67,13 @@ if length == 0 then empty else . end
      # What you told the run. It lives in the worktree and dies with it.
      answers: (if $answers == "" then null else $answers end),
      shipped: (($s.step_results["do-open-pr"].status // "") == "completed"),
+     # Why it stopped outlives the worktree only here. The engine error alone
+     # is "exited with code 1"; the stderr of the step is the reason.
+     failed_at: (if $s.status == "failed" then $s.current_step_id else null end),
+     error: (if $s.status == "failed" then $s.error else null end),
+     stderr: (if $s.status == "failed"
+              then ($s.step_results[$s.current_step_id].output.stderr // null)
+              else null end),
      slowest: [$w.secs | to_entries[] | select($w.type[.key] | leaf)
                | {step: .key, seconds: (.value | round)}]
               | sort_by(-.seconds) | .[0:5]
@@ -139,7 +146,8 @@ log() {
            "\(.wall_seconds / 3600 | round)h wall  " +
            "review x\(.review_passes)  converge x\(.converge_rounds)  " +
            "replay \(.replays)  " +
-           (if .shipped then "shipped" else "-" end)' "$f"
+           (if .shipped then "shipped" elif .failed_at then "failed at " + .failed_at
+            else "-" end)' "$f"
   done | column -t -s "$(printf '\t')"
 }
 
