@@ -20,6 +20,7 @@ out=$(bash "$HERE/check.sh" r1 decision printf REVIEW)
 out=$(bash "$HERE/check.sh" r1 decision sh -c 'echo "analyze.json: parse error" >&2; exit 2')
 [ "$out" = REPAIR ] || say "a first failure printed '$out'"
 grep -qF "analyze.json: parse error" "$state/repair.md" || say "repair.md lacks the reason"
+[ "$(jq -r .check "$state/repairs.jsonl")" = decision ] || say "the repair was not logged"
 
 # The second one stops it, with the reason where the engine keeps stderr.
 if bash "$HERE/check.sh" r1 decision sh -c 'echo "still broken" >&2; exit 1' 2>"$T/err"; then
@@ -32,6 +33,7 @@ bash "$HERE/check.sh" r1 decision true >/dev/null
 [ -e "$state/repair.md" ] && say "repair.md outlived the repair"
 out=$(bash "$HERE/check.sh" r1 decision false 2>/dev/null) || say "a fresh failure after a repair stopped the run"
 [ "$out" = REPAIR ] || say "a fresh failure after a repair printed '$out'"
+[ "$(wc -l < "$state/repairs.jsonl")" = 2 ] || say "the repair log does not keep every repair"
 
 if ! command -v specify >/dev/null; then
   echo "skip: no specify, the engine half is not run" >&2

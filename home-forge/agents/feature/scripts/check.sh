@@ -3,7 +3,8 @@
 # one is written to repair.md, which that step reads on its second try, and
 # REPAIR tells the loop around them to go again; only a second one stops the
 # run. On success it prints what the check printed, so a check whose output
-# drives the workflow keeps doing so.
+# drives the workflow keeps doing so. Every repair is also appended to
+# repairs.jsonl, which record keeps once the worktree is gone.
 #   check.sh <run_id> <name> <command...>
 set -euo pipefail
 
@@ -32,5 +33,7 @@ fi
   echo
   cat "$err"
 } > "${state}/repair.md"
+jq -nc --arg check "$name" --arg at "$(date -Iseconds)" --rawfile reason "$err" \
+  '{check: $check, at: $at, reason: $reason}' >> "${state}/repairs.jsonl"
 touch "$failed_once"
 printf %s REPAIR

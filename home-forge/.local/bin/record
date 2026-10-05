@@ -62,11 +62,17 @@ if length == 0 then empty else . end
      converge_rounds: passes("converge"),
      gates: [$s.step_results | to_entries[] | select(.value.type == "gate")
              | {step: .key, answer: (.value.output.choice // null)}],
-     review: ($review[0] | if . then {status, summary} else null end),
-     ui: ($ui[0] | if . then {status, summary} else null end),
+     review: ($review[0] | if . then {status, summary, bullets} else null end),
+     ui: ($ui[0] | if . then {status, summary, bullets} else null end),
+     repairs: $repairs,
      # What you told the run. It lives in the worktree and dies with it.
      answers: (if $answers == "" then null else $answers end),
      shipped: (($s.step_results["do-open-pr"].status // "") == "completed"),
+     # What the run pushed, so a retro can count the commits a person added
+     # to the pull request after it.
+     pr_url: (($s.step_results["do-open-pr"].output.stdout // "")
+              | [scan("https://\\S+")] | last),
+     shipped_sha: (if $sha == "" then null else $sha end),
      # Why it stopped outlives the worktree only here. The engine error alone
      # is "exited with code 1"; the stderr of the step is the reason.
      failed_at: (if $s.status == "failed" then $s.current_step_id else null end),
@@ -108,6 +114,8 @@ record_run() {
      --slurpfile review <(cat "$feature_state/review.json" 2>/dev/null || echo null) \
      --slurpfile ui     <(cat "$feature_state/ui.json"     2>/dev/null || echo null) \
      --arg answers "$(cat "$feature_state"/*-answer.md 2>/dev/null || true)" \
+     --slurpfile repairs <(cat "$feature_state/repairs.jsonl" 2>/dev/null || true) \
+     --arg sha "$(git -C "$tree" rev-parse HEAD 2>/dev/null || true)" \
      "$program" < <(jq -s '.' "$run_dir/log.jsonl") > "$tmp"
   mv "$tmp" "$out"
   echo "recorded  $target  $run_id"
