@@ -68,6 +68,8 @@ note found on this pass is still only a note.
 ## What you must not do
 
 Never edit a file, never commit, never run a formatter. Read and run tests only.
+Never run a command in the background: the session ends with your turn and
+nothing wakes it up, so wait for every test before writing the verdict.
 
 ## Verdict — mandatory final action
 
