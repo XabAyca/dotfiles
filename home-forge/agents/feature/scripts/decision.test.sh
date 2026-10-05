@@ -50,6 +50,20 @@ sed -i '/T003/d' specs/001/tasks.md
 echo '{"summary": "s", "findings": []}' > .specify/state/r1/analyze.json
 says REVIEW "an analysis with no counts passed as clear"
 
+# A feature too big for one run asks for a person even with nothing else to say.
+echo '{"critical": 0, "high": 0, "summary": "s", "findings": []}' > .specify/state/r1/analyze.json
+says CLEAR "a clear feature asked for a person before the size check"
+for i in $(seq 10 99); do echo "- [ ] T0$i build part $i"; done >> specs/001/tasks.md
+says CLEAR "a long but autonomous feature asked for a person"
+sed -i '/T0[1-9][0-9] build/d' specs/001/tasks.md
+for i in $(seq 1 9); do echo "- [ ] T10$i [HUMAN] ask $i"; done >> specs/001/tasks.md
+says REVIEW "nine [HUMAN] tasks did not ask for a person"
+shown 'Trop gros pour un seul run' "the size is not shown"
+shown '9 tâches attendent un humain' "the count is not shown"
+sed -i '/T10[1-9]/d' specs/001/tasks.md
+bash "$HERE/decision.sh" r1 >/dev/null
+hidden 'Trop gros' "a feature of normal size was called too big"
+
 rm .specify/state/r1/analyze.json
 if bash "$HERE/decision.sh" r1 2>/dev/null; then
   echo "FAIL: a missing analysis was not an error" >&2; fail=1
