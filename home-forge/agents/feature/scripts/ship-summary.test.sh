@@ -33,12 +33,14 @@ title=$(bash "$HERE/ship-summary.sh" r1)
 shown 'pas passées' "a review that never ran was not flagged"
 titled "Pas prêt à livrer : les reviews ne sont pas passées" "a review that never ran was titled ready"
 
+echo '{"status": "DONE", "summary": "all good", "bullets": []}' > "$state/review.json"
 mkdir -p specs/001
 echo '{"feature_directory": "specs/001"}' > .specify/feature.json
 printf -- '- [x] T003 done\n- [ ] T004 [HUMAN] ask legal\n' > specs/001/tasks.md
 printf '# Implementation incomplete — run r1\n\n- [ ] T003 given up\n' > "$state/incomplete.md"
 title=$(bash "$HERE/ship-summary.sh" r1)
 shown '## Tâches encore ouvertes' "the open tasks are not shown"
+titled "Reviews passées, mais des tâches restent ouvertes" "a run with open tasks was titled ready"
 shown 'T004 [HUMAN] ask legal' "the open task is not shown"
 hidden 'T003 given up' "a task the repair finished is still shown open"
 

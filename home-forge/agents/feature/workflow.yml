@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.21.0"
+  version: "0.22.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -265,19 +265,25 @@ steps:
         type: shell
         run: 'bash $HOME/agents/feature/scripts/commit.sh {{ context.run_id }} apply'
 
-  - id: ship-gate
-    type: gate
-    message: "{{ steps.ship-summary.output.stdout }}\n\nTout est commité sur la branche ; le récapitulatif est ci-dessous.\n\n*Répondre avec `agent menu` :*\n• `push` — je pousse et j'ouvre une PR en draft\n• `reject` — ça reste sur la machine\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
-    show_file: ".specify/state/{{ context.run_id }}/ship.md"
-    options: [push, reject]
-    # skip only skips the gate itself: the rejection must be carried over
-    # to the next step, otherwise the PR would go out anyway.
-    on_reject: skip
-    verdict_input: ship_verdict
+  # A run whose reviews passed and that left nothing open goes out as a draft
+  # without asking: the draft PR is where a person reads it anyway.
+  - id: needs-ship-gate
+    type: if
+    condition: "{{ steps.ship-summary.output.stdout != 'Prêt à livrer' }}"
+    then:
+      - id: ship-gate
+        type: gate
+        message: "{{ steps.ship-summary.output.stdout }}\n\nTout est commité sur la branche ; le récapitulatif est ci-dessous.\n\n*Répondre avec `agent menu` :*\n• `push` — je pousse et j'ouvre une PR en draft\n• `reject` — ça reste sur la machine\n\n_Seuls ces deux mots sont lus ici ; une réponse rédigée est refusée._"
+        show_file: ".specify/state/{{ context.run_id }}/ship.md"
+        options: [push, reject]
+        # skip only skips the gate itself: the rejection must be carried over
+        # to the next step, otherwise the PR would go out anyway.
+        on_reject: skip
+        verdict_input: ship_verdict
 
   - id: open-pr
     type: if
-    condition: "{{ inputs.ship_verdict == 'push' }}"
+    condition: "{{ inputs.ship_verdict == 'push' or steps.ship-summary.output.stdout == 'Prêt à livrer' }}"
     then:
       - id: do-open-pr
         type: shell

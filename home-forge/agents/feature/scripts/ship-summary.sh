@@ -54,6 +54,8 @@ fi
   done
 } > "${state}/ship.md"
 
-# The ship gate's title; no newline, it is spliced into the message.
-if [ "$passed" = yes ]; then printf %s "Prêt à livrer"
-else printf %s "Pas prêt à livrer : les reviews ne sont pas passées"; fi
+# The ship gate's title; no newline, it is spliced into the message. The
+# workflow pushes without a gate on exactly "Prêt à livrer".
+if [ "$passed" = no ]; then printf %s "Pas prêt à livrer : les reviews ne sont pas passées"
+elif [ -n "$open" ]; then printf %s "Reviews passées, mais des tâches restent ouvertes"
+else printf %s "Prêt à livrer"; fi
