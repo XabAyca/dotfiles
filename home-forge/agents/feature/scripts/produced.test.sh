@@ -24,6 +24,11 @@ echo '# Spec' > specs/001/spec.md
 passes spec "a written spec.md was refused"
 fails plan "spec.md alone passed for plan"
 
+mkdir -p .specify/templates
+echo '# Plan: [FEATURE]' > .specify/templates/plan-template.md
+cp .specify/templates/plan-template.md specs/001/plan.md
+fails plan "a plan.md still the template passed"
+
 echo '# Plan' > specs/001/plan.md
 passes plan "a written plan.md was refused"
 
