@@ -284,8 +284,16 @@ rows() {
 
 list() { rows | column -t -s "$(printf '\t')"; }
 
-# What the menu shows beside the list: where the run stands, the question it is
-# waiting on, and the tail of its pane — the only place a working step speaks.
+# A gate's message is only its header; the questions are in the file it names.
+gate_file() {
+  local tree="$PROJECTS/$1" f
+  f=$(jq -r '.step_results[.current_step_id].output.show_file // empty' \
+        "$tree/.specify/workflows/runs/$2/state.json")
+  if [ -n "$f" ] && [ -f "$tree/$f" ]; then printf '%s' "$tree/$f"; fi
+}
+
+# What the menu shows beside the list: where the run stands, then what its gate
+# asks, or else the tail of its pane — the only place a working step speaks.
 preview() {
   local target=${1:?missing project/branch} run=${2:?missing run_id}
   local state="$PROJECTS/$target/.specify/workflows/runs/$run/state.json"
@@ -298,7 +306,9 @@ preview() {
          (.step_results[.current_step_id].output.stderr // empty),
          (.step_results[.current_step_id].output.message // empty)' "$state"
   echo
-  tmux capture-pane -pt "$target" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -20
+  local file; file=$(gate_file "$target" "$run")
+  if [ -n "$file" ]; then cat "$file"
+  else tmux capture-pane -pt "$target" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -20; fi
 }
 
 # Pick a run, then what to do with it. The actions are the subcommands above,
@@ -322,7 +332,9 @@ menu() {
     # The gate's own words: a ship gate offers push, not approve.
     paused)  actions=$(jq -r '.step_results[.current_step_id].output.options[]? | "answer " + .' \
                          "$PROJECTS/$target/.specify/workflows/runs/$run/state.json")
-             actions+=$'\nanswer in plain text\nretry\nattach\nstop' ;;
+             actions+=$'\nanswer in plain text\nretry\nattach\nstop'
+             # First, so a stray Enter reads the questions instead of answering them.
+             if [ -n "$(gate_file "$target" "$run")" ]; then actions="read"$'\n'"$actions"; fi ;;
     running) actions=$'attach\nstop' ;;
     failed)  actions=$'resume\nretry\nattach\nstop\ndone' ;;
     *)       actions=$'attach\nretry\nrecord\ndone' ;;
@@ -338,6 +350,7 @@ menu() {
       read -r -p 'answer: ' text
       if [ -n "$text" ]; then "$GATEWAY" reply "$target" "$run" "$text"; fi ;;
     answer\ *)  "$GATEWAY" reply "$target" "$run" "${action#answer }" ;;
+    read)   less "$(gate_file "$target" "$run")" ;;
     attach)
       # Nesting a session inside another is refused; from a pane, move to it.
       if [ -n "${TMUX:-}" ]; then tmux switch-client -t "$target"

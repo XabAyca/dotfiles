@@ -80,6 +80,19 @@ link_env "$T/env/main" "$T/env/own"
 [ "$(readlink "$T/env/new/.env")" = "$T/env/main/.env" ] || { echo "FAIL: link_env did not link .env" >&2; fail=1; }
 [ "$(cat "$T/env/own/.env")" = OWN=1 ] || { echo "FAIL: link_env replaced an existing .env" >&2; fail=1; }
 
+# A gate shows the questions in the file it names; a step without one, its pane.
+g=$T/projects/p/g/.specify
+mkdir -p "$g/workflows/runs/g1" "$g/state/g1"
+echo 'Q1: which way?' > "$g/state/g1/decision.md"
+echo '{"status":"paused","current_step_id":"gate","updated_at":"x","step_results":{"gate":{"output":{"message":"Before the code","show_file":".specify/state/g1/decision.md"}}}}' \
+  > "$g/workflows/runs/g1/state.json"
+got=$( PROJECTS=$T/projects; tmux() { echo PANE; }; preview p/g g1 )
+grep -q 'Q1: which way?' <<< "$got" || { echo "FAIL: the preview hid the gate's questions" >&2; fail=1; }
+jq '.step_results.gate.output |= del(.show_file)' "$g/workflows/runs/g1/state.json" > "$T/s" \
+  && mv "$T/s" "$g/workflows/runs/g1/state.json"
+got=$( PROJECTS=$T/projects; tmux() { echo PANE; }; preview p/g g1 )
+grep -q PANE <<< "$got" || { echo "FAIL: a gate without a file lost the pane" >&2; fail=1; }
+
 # done tears down what the bootstrap set up before the worktree goes.
 for cmd in record tmux; do printf '#!/usr/bin/env bash\n' > "$T/bin/$cmd"; chmod +x "$T/bin/$cmd"; done
 PROJECTS="$T/projects"
