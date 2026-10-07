@@ -93,6 +93,19 @@ jq '.step_results.gate.output |= del(.show_file)' "$g/workflows/runs/g1/state.js
 got=$( PROJECTS=$T/projects; tmux() { echo PANE; }; preview p/g g1 )
 grep -q PANE <<< "$got" || { echo "FAIL: a gate without a file lost the pane" >&2; fail=1; }
 
+# A written answer reaches the gate whole, every pasted line of it.
+mkdir -p "$T/m/p/w/.specify/workflows/runs/w1"
+echo '{"run_id":"w1","status":"paused","current_step_id":"gate","updated_at":"2026-10-07T10:00:00+00:00","step_results":{"gate":{"output":{"options":["approve"]}}}}' \
+  > "$T/m/p/w/.specify/workflows/runs/w1/state.json"
+printf '#!/usr/bin/env bash\nprintf "one\\ntwo\\nthree\\n" > "$1"\n' > "$T/editor"
+printf '#!/usr/bin/env bash\nprintf %%s "$4" > "%s/replied"\n' "$T" > "$T/gateway"
+chmod +x "$T/editor" "$T/gateway"
+( PROJECTS=$T/m; GATEWAY=$T/gateway; EDITOR=$T/editor
+  fzf() { case "$*" in *runs*) head -1 ;; *) echo 'answer in plain text' ;; esac; }
+  menu </dev/null >/dev/null ) || true
+[ "$(cat "$T/replied" 2>/dev/null)" = $'one\ntwo\nthree' ] \
+  || { echo "FAIL: the written answer reached the gate as '$(cat "$T/replied" 2>/dev/null)'" >&2; fail=1; }
+
 # done tears down what the bootstrap set up before the worktree goes.
 for cmd in record tmux; do printf '#!/usr/bin/env bash\n' > "$T/bin/$cmd"; chmod +x "$T/bin/$cmd"; done
 PROJECTS="$T/projects"

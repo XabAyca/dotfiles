@@ -346,8 +346,11 @@ menu() {
 
   case $action in
     'answer in plain text')
-      local text
-      read -r -p 'answer: ' text
+      # A paste spans lines: read takes the first and the shell runs the rest.
+      local file text
+      file=$(mktemp --suffix=.md)
+      "${EDITOR:-vi}" "$file"
+      text=$(cat "$file"); rm -f "$file"
       if [ -n "$text" ]; then "$GATEWAY" reply "$target" "$run" "$text"; fi ;;
     answer\ *)  "$GATEWAY" reply "$target" "$run" "${action#answer }" ;;
     read)   less "$(gate_file "$target" "$run")" ;;
