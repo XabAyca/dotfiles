@@ -36,6 +36,10 @@
     }
   },
   "theme": "dark-ansi",
+  "statusLine": {
+    "type": "command",
+    "command": "~/.local/bin/claude_statusline"
+  },
   "autoMode": {
     "environment": [
       "### Org-wide",
