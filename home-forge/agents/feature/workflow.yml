@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.24.0"
+  version: "0.25.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -72,7 +72,7 @@ steps:
     command: speckit.plan
     integration: "{{ inputs.integration }}"
     input:
-      args: "{{ inputs.spec }}"
+      args: "{{ inputs.spec }}\n\nNobody will answer or approve anything: skip any preliminary summary or validation step a project convention asks for and write the plan and its documents now. Mark every choice you make alone [ASSUMPTION: <the choice>]."
 
   - id: planned
     type: shell
