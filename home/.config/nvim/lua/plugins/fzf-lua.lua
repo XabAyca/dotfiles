@@ -8,7 +8,7 @@ return {
 
     fzf.setup({
       "ivy", -- barre ancrée en bas de l'écran
-      winopts = { height = 0.25, preview = { hidden = true } }, -- compact, sans preview
+      winopts = { height = 0.5, toggle_behavior = "default", preview = { hidden = true } }, -- moitié basse, sans preview
       fzf_opts = { ["--layout"] = "default" }, -- prompt en bas, résultats au-dessus
       keymap = {
         fzf = {
