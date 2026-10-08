@@ -47,7 +47,7 @@ Uses the `home-forge` stow package instead of `home` (patched paths, tmux config
 to survive SSH disconnects and not leak the remote clipboard). Verified on Ubuntu 26.04.
 
 Prerequisite: [mise](https://mise.jdx.dev) manages the runtimes and `.zshrc` activates it.
-Step 4 is the only one performed on the client machine, not the server.
+Step 2 is the only one performed on the client machine, not the server.
 
 1. Packages. `git`, `tmux`, `fzf` and `ripgrep` are often already installed.
 
@@ -58,34 +58,12 @@ Step 4 is the only one performed on the client machine, not the server.
     sudo locale-gen fr_FR.UTF-8 && sudo update-locale
     ```
 
-2. Debian ships as `fdfind` and `batcat` the two binaries `.zshrc` calls `fd` and `bat`.
-   Without these links, `Ctrl-T` and `Alt-C` are dead:
-
-    ```shell
-    mkdir -p ~/.local/bin
-    ln -sf "$(command -v fdfind)" ~/.local/bin/fd
-    ln -sf "$(command -v batcat)" ~/.local/bin/bat
-    ```
-
-   `emojify` has no package either — it is a single bash script. `.gitconfig` pipes
-   git's output through it before delta, so the `:memo:` of a commit message shows
-   up as an emoji:
-
-    ```shell
-    curl -fsSL -o ~/.local/bin/emojify \
-      https://raw.githubusercontent.com/mrowa44/emojify/master/emojify
-    chmod +x ~/.local/bin/emojify
-    ```
-
-3. Powerlevel10k and fzf-tab need no step: neither has a Debian/Ubuntu package, so
-   `.zshrc` git-clones them into `~/.local/share` on the first shell start.
-
-4. On the machine you connect **from**, install [MesloLGS NF](https://github.com/romkatv/powerlevel10k#manual-font-installation)
+2. On the machine you connect **from**, install [MesloLGS NF](https://github.com/romkatv/powerlevel10k#manual-font-installation)
    and select it in the terminal. Glyphs are drawn by the client, so nothing installed
    on the server can fix missing ones. `.p10k.zsh` runs in `nerdfont-complete` mode —
    a Nerd Fonts v3 face renders shifted glyphs rather than none.
 
-5. Dotfiles. A `~/.zshrc` or `~/.gitconfig` already in place would block stow:
+3. Dotfiles. A `~/.zshrc` or `~/.gitconfig` already in place would block stow:
 
     ```shell
     git clone https://github.com/XabAyca/dotfiles ~/.dotfiles
@@ -105,16 +83,16 @@ Step 4 is the only one performed on the client machine, not the server.
     ln -sfn .claude/CLAUDE.md ~/AGENTS.md
     ```
 
-6. Tmux plugins: launch `tmux`, then `Ctrl-A + I`. TPM clones itself on first launch.
+4. Tmux plugins: launch `tmux`, then `Ctrl-A + I`. TPM clones itself on first launch.
 
-7. Test before switching shells. Keep **two** SSH sessions open and, in one of them,
+5. Test before switching shells. Keep **two** SSH sessions open and, in one of them,
    run `zsh -l` — a child process you leave with `exit`, never `source ~/.zshrc`,
    which asks bash to read zsh. Check the p10k prompt and its glyphs, `node -v` and
    `which claude` (the mise test), `git diff` rendered by delta, `git log` with its
    gitmoji, `Ctrl-T` / `Ctrl-R` / `Alt-C`, `cd <Tab>`, `ll`, `nvim`, and `C-hjkl`
    across tmux panes and nvim splits.
 
-8. Only once that is reliable, several sessions in a row:
+6. Only once that is reliable, several sessions in a row:
 
     ```shell
     chsh -s "$(which zsh)"
