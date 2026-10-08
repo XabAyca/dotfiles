@@ -10,12 +10,6 @@ return {
       "ivy", -- barre ancrée en bas de l'écran
       winopts = { height = 0.5, toggle_behavior = "default", preview = { hidden = true } }, -- moitié basse, sans preview
       fzf_opts = { ["--layout"] = "default" }, -- prompt en bas, résultats au-dessus
-      keymap = {
-        fzf = {
-          ["ctrl-j"] = "down",
-          ["ctrl-k"] = "up",
-        },
-      },
       files = {
         fd_opts = "--type f --hidden --exclude .git",
       },
@@ -24,6 +18,16 @@ return {
         rg_opts = "--column --line-number --no-heading --color=always --smart-case "
           .. "--max-columns=4096 --max-count=50 --hidden --glob '!.git/*' -e",
       },
+    })
+
+    -- smart-splits capte <C-j>/<C-k> en mode terminal : on les rend à fzf dans sa fenêtre
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "fzf",
+      callback = function(ev)
+        for _, key in ipairs({ "<C-j>", "<C-k>" }) do
+          vim.keymap.set("t", key, key, { buffer = ev.buf })
+        end
+      end,
     })
 
     local keymap = vim.keymap
