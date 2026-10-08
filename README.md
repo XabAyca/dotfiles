@@ -41,9 +41,7 @@ Some pieces install themselves on first launch, nothing to do for them:
     ```
 
 6. iTerm2: Settings > Settings > Import, and pick `iTerm2_State.itermexport`.
-7. VSCode extensions: `sh install-vscode-extensions.sh`
-   (to refresh the list: `code --list-extensions`).
-8. macOS settings: `source install-macos-settings.sh`
+7. macOS settings: `source install-macos-settings.sh`
 
 ## Ubuntu server (headless, SSH)
 
