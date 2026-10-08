@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
-# Claude Code status line: dir  branch | model (effort) | Ctx bar % | Use bar %  reset time
+# Claude Code status line: repo/worktree  branch *dirty #PR | model (effort) | Ctx bar % | Use bar %  reset 7d %
 # Reads the session JSON on stdin (https://code.claude.com/docs/en/statusline).
 # Colors are ANSI 0-15, so they follow the base16 terminal palette; icons need a Nerd Font.
 
-IFS=$'\x1f' read -r dir model effort ctx quota reset < <(jq -r '[
+IFS=$'\x1f' read -r dir repo worktree pr review model effort ctx quota reset week < <(jq -r '[
   .workspace.current_dir,
+  (.workspace.repo.name // ""),
+  (.workspace.git_worktree // ""),
+  (.pr.number // ""),
+  (.pr.review_state // ""),
   .model.display_name,
   (.effort.level // ""),
   (.context_window.used_percentage // "" | if . == "" then . else floor end),
   (.rate_limits.five_hour.used_percentage // "" | if . == "" then . else floor end),
-  (.rate_limits.five_hour.resets_at // "")
+  (.rate_limits.five_hour.resets_at // ""),
+  (.rate_limits.seven_day.used_percentage // "" | if . == "" then . else floor end)
 ] | map(tostring) | join("\u001f")')
 
 level() {
@@ -28,15 +33,28 @@ bar() {
 }
 
 sep=" \033[2m|\033[0m "
-out="\033[1;36m${dir##*/}\033[0m"
+name=${repo:-${dir##*/}}
+[[ -n $worktree ]] && name+="/$worktree"
+out="\033[1;36m$name\033[0m"
 branch=$(git -C "$dir" --no-optional-locks branch --show-current 2>/dev/null)
-[[ -n $branch ]] && out+=" \033[1;35m $branch\033[0m"
+if [[ -n $branch ]]; then
+  out+=" \033[1;35m\uE725 $branch\033[0m"
+  dirty=$(git -C "$dir" --no-optional-locks status --porcelain 2>/dev/null | wc -l)
+  (( dirty > 0 )) && out+=" \033[33m*$dirty\033[0m"
+fi
+if [[ -n $pr ]]; then
+  case $review in
+    approved) color=32 ;; changes_requested) color=31 ;; draft) color=2 ;; *) color=0 ;;
+  esac
+  out+=" \033[${color}m#$pr\033[0m"
+fi
 out+="$sep$model"
 [[ -n $effort ]] && out+=" \033[33m($effort)\033[0m"
 [[ -n $ctx ]] && out+="${sep}Ctx $(bar "$ctx")"
 if [[ -n $quota ]]; then
   time=$(date -d "@$reset" +%H:%M 2>/dev/null)
   out+="${sep}Use $(bar "$quota")"
-  [[ -n $time ]] && out+=" \033[2m $time\033[0m"
+  [[ -n $time ]] && out+=" \033[2m\uF017 $time\033[0m"
 fi
+[[ -n $week ]] && out+=" \033[2m7d\033[0m \033[$(level "$week")m${week}%\033[0m"
 printf '%b\n' "$out"
