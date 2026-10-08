@@ -81,16 +81,13 @@ Step 4 is the only one performed on the client machine, not the server.
     chmod +x ~/.local/bin/emojify
     ```
 
-3. Oh My Zsh, Powerlevel10k and fzf-tab. Powerlevel10k has no Debian/Ubuntu package;
-   the git clone is the official route on Linux. fzf-tab is not optional either —
-   `.zshrc` lists it in `plugins=()`, and its absence warns on every shell start.
-   `--unattended` stops the installer from running `chsh` on its own: the shell
-   switch comes last, once the config is proven.
+3. Powerlevel10k and fzf-tab. Neither has a Debian/Ubuntu package; the git clone is
+   the official route on Linux. fzf-tab is not optional — `.zshrc` sources it, and
+   its absence errors on every shell start.
 
     ```shell
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.local/share/p10k
-    git clone --depth=1 https://github.com/Aloxaf/fzf-tab ~/.oh-my-zsh/custom/plugins/fzf-tab
+    git clone --depth=1 https://github.com/Aloxaf/fzf-tab ~/.local/share/fzf-tab
     ```
 
 4. On the machine you connect **from**, install [MesloLGS NF](https://github.com/romkatv/powerlevel10k#manual-font-installation)
@@ -98,7 +95,7 @@ Step 4 is the only one performed on the client machine, not the server.
    on the server can fix missing ones. `.p10k.zsh` runs in `nerdfont-complete` mode —
    a Nerd Fonts v3 face renders shifted glyphs rather than none.
 
-5. Dotfiles. Oh My Zsh has just written its own `~/.zshrc`, which would block stow:
+5. Dotfiles. A `~/.zshrc` or `~/.gitconfig` already in place would block stow:
 
     ```shell
     git clone https://github.com/XabAyca/dotfiles ~/.dotfiles
