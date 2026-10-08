@@ -26,6 +26,7 @@ brew 'puma/puma/puma-dev'
 brew 'pyenv'
 brew 'rbenv'
 brew 'redis', restart_service: true
+brew 'rustup'
 brew 'powerlevel10k'
 brew 'stow'
 brew 'tmux'

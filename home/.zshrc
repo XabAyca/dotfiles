@@ -75,5 +75,5 @@ alias ll="lsd --git --ignore-glob='*DS_Store*' -l --group-directories-first --tr
 alias ll2="lsd --tree --depth 2 --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
 alias tpro="tmuxinator start pro"
 alias t="tmux new-session -A -s"
-[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+export PATH="/opt/homebrew/opt/rustup/bin:$HOME/.cargo/bin:$PATH"
 export PATH="$HOME/bin:$PATH"
