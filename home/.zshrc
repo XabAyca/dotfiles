@@ -33,6 +33,7 @@ autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=*'
 
 source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
+[[ -d ~/.local/share/fzf-tab ]] || git clone -q --depth=1 https://github.com/Aloxaf/fzf-tab ~/.local/share/fzf-tab
 source ~/.local/share/fzf-tab/fzf-tab.plugin.zsh
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

@@ -31,6 +31,8 @@ bindkey "${terminfo[kdch1]}" delete-char
 autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=*'
 
+[[ -d ~/.local/share/p10k ]] || git clone -q --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.local/share/p10k
+[[ -d ~/.local/share/fzf-tab ]] || git clone -q --depth=1 https://github.com/Aloxaf/fzf-tab ~/.local/share/fzf-tab
 source ~/.local/share/p10k/powerlevel10k.zsh-theme
 source ~/.local/share/fzf-tab/fzf-tab.plugin.zsh
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh

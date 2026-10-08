@@ -9,15 +9,11 @@
     cd .dotfiles
     ```
 2. Install Homebrew from https://brew.sh/
-3. Install fzf-tab
-    ```shell
-    git clone --depth=1 https://github.com/Aloxaf/fzf-tab ~/.local/share/fzf-tab
-    ```
-4. Install applications: `brew bundle`
-5. Install Iterm2 config Settings > Settings > Import
-6. Set dotfiles: `stow --no-folding home`
-7. Run: install tmux plugins TPM: `<leader> I`
-8. Install ruby:
+3. Install applications: `brew bundle`
+4. Install Iterm2 config Settings > Settings > Import
+5. Set dotfiles: `stow --no-folding home`
+6. Run: install tmux plugins TPM: `<leader> I`
+7. Install ruby:
     ```shell
     rbenv install <version>
     rbenv global <version>
@@ -32,7 +28,7 @@
     node install <version>
     node global <version>
     ```
-9. Install VSCode extensions
+8. Install VSCode extensions
     ```shell
     sh install-vscode-extensions.sh
     ```
@@ -40,7 +36,7 @@
     ```shell
     code --list-extensions
     ```
-10. Install MacOs Settings
+9. Install MacOs Settings
     ```shell
     source install-macos-settings.sh
     ```
@@ -81,14 +77,8 @@ Step 4 is the only one performed on the client machine, not the server.
     chmod +x ~/.local/bin/emojify
     ```
 
-3. Powerlevel10k and fzf-tab. Neither has a Debian/Ubuntu package; the git clone is
-   the official route on Linux. fzf-tab is not optional — `.zshrc` sources it, and
-   its absence errors on every shell start.
-
-    ```shell
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.local/share/p10k
-    git clone --depth=1 https://github.com/Aloxaf/fzf-tab ~/.local/share/fzf-tab
-    ```
+3. Powerlevel10k and fzf-tab need no step: neither has a Debian/Ubuntu package, so
+   `.zshrc` git-clones them into `~/.local/share` on the first shell start.
 
 4. On the machine you connect **from**, install [MesloLGS NF](https://github.com/romkatv/powerlevel10k#manual-font-installation)
    and select it in the terminal. Glyphs are drawn by the client, so nothing installed
