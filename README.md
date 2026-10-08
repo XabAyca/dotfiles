@@ -12,8 +12,7 @@
 3. Install applications: `brew bundle`
 4. Install Iterm2 config Settings > Settings > Import
 5. Set dotfiles: `stow --no-folding home`
-6. Run: install tmux plugins TPM: `<leader> I`
-7. Install ruby:
+6. Install ruby:
     ```shell
     rbenv install <version>
     rbenv global <version>
@@ -28,7 +27,7 @@
     node install <version>
     node global <version>
     ```
-8. Install VSCode extensions
+7. Install VSCode extensions
     ```shell
     sh install-vscode-extensions.sh
     ```
@@ -36,7 +35,7 @@
     ```shell
     code --list-extensions
     ```
-9. Install MacOs Settings
+8. Install MacOs Settings
     ```shell
     source install-macos-settings.sh
     ```
@@ -83,16 +82,14 @@ Step 2 is the only one performed on the client machine, not the server.
     ln -sfn .claude/CLAUDE.md ~/AGENTS.md
     ```
 
-4. Tmux plugins: launch `tmux`, then `Ctrl-A + I`. TPM clones itself on first launch.
-
-5. Test before switching shells. Keep **two** SSH sessions open and, in one of them,
+4. Test before switching shells. Keep **two** SSH sessions open and, in one of them,
    run `zsh -l` — a child process you leave with `exit`, never `source ~/.zshrc`,
    which asks bash to read zsh. Check the p10k prompt and its glyphs, `node -v` and
    `which claude` (the mise test), `git diff` rendered by delta, `git log` with its
    gitmoji, `Ctrl-T` / `Ctrl-R` / `Alt-C`, `cd <Tab>`, `ll`, `nvim`, and `C-hjkl`
    across tmux panes and nvim splits.
 
-6. Only once that is reliable, several sessions in a row:
+5. Only once that is reliable, several sessions in a row:
 
     ```shell
     chsh -s "$(which zsh)"
