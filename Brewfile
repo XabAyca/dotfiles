@@ -1,5 +1,4 @@
 # Taps
-tap 'heroku/brew'
 tap 'puma/puma'
 
 # Brews
@@ -12,7 +11,6 @@ brew 'fd'
 brew 'fzf'
 brew 'git'
 brew 'gh'
-brew 'heroku/brew/heroku'
 brew 'imagemagick'
 brew 'maccy'
 brew 'mailcatcher', restart_service: true
@@ -39,14 +37,9 @@ brew 'zsh-autosuggestions'
 brew 'zsh-syntax-highlighting'
 
 # Casks
-cask 'discord'
 cask 'font-hack-nerd-font'
 cask 'garmin-express'
-cask 'google-drive'
-cask 'insomnia'
 cask 'iterm2'
-cask 'notion'
 cask 'rectangle'
 cask 'slack'
 cask 'stats'
-cask 'whatsapp'
