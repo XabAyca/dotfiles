@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Claude Code status line: dir ⎇ branch · model · context % · 5h quota % (reset time)
+# Claude Code status line: dir  branch | model (effort) | Ctx bar % | Use bar %  reset time
 # Reads the session JSON on stdin (https://code.claude.com/docs/en/statusline).
-# Colors are ANSI 0-15, so they follow the base16 terminal palette.
+# Colors are ANSI 0-15, so they follow the base16 terminal palette; icons need a Nerd Font.
 
-IFS=$'\x1f' read -r dir model ctx quota reset < <(jq -r '[
+IFS=$'\x1f' read -r dir model effort ctx quota reset < <(jq -r '[
   .workspace.current_dir,
   .model.display_name,
+  (.effort.level // ""),
   (.context_window.used_percentage // "" | if . == "" then . else floor end),
   (.rate_limits.five_hour.used_percentage // "" | if . == "" then . else floor end),
   (.rate_limits.five_hour.resets_at // "")
@@ -15,14 +16,27 @@ level() {
   if (( $1 < 50 )); then printf '32'; elif (( $1 < 80 )); then printf '33'; else printf '31'; fi
 }
 
-out="\033[1;36m${dir/#$HOME/\~}\033[0m"
+bar() {
+  local filled=$(( $1 / 10 )) color
+  color=$(level "$1")
+  printf '\033[%sm' "$color"
+  for (( i = 0; i < 10; i++ )); do
+    (( i == filled )) && printf '\033[2m'
+    if (( i < filled )); then printf '▓'; else printf '░'; fi
+  done
+  printf '\033[0m \033[%sm%s%%\033[0m' "$color" "$1"
+}
+
+sep=" \033[2m|\033[0m "
+out="\033[1;36m${dir##*/}\033[0m"
 branch=$(git -C "$dir" --no-optional-locks branch --show-current 2>/dev/null)
-[[ -n $branch ]] && out+=" \033[1;35m⎇ $branch\033[0m"
-out+=" \033[2m·\033[0m $model"
-[[ -n $ctx ]] && out+=" \033[2m·\033[0m ctx \033[$(level "$ctx")m${ctx}%\033[0m"
+[[ -n $branch ]] && out+=" \033[1;35m $branch\033[0m"
+out+="$sep$model"
+[[ -n $effort ]] && out+=" \033[33m($effort)\033[0m"
+[[ -n $ctx ]] && out+="${sep}Ctx $(bar "$ctx")"
 if [[ -n $quota ]]; then
   time=$(date -d "@$reset" +%H:%M 2>/dev/null)
-  out+=" \033[2m·\033[0m 5h \033[$(level "$quota")m${quota}%\033[0m"
-  [[ -n $time ]] && out+=" \033[2m↻ $time\033[0m"
+  out+="${sep}Use $(bar "$quota")"
+  [[ -n $time ]] && out+=" \033[2m $time\033[0m"
 fi
 printf '%b\n' "$out"
