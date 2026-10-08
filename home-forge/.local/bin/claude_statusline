@@ -3,9 +3,8 @@
 # Reads the session JSON on stdin (https://code.claude.com/docs/en/statusline).
 # Colors are ANSI 0-15, so they follow the base16 terminal palette; icons need a Nerd Font.
 
-IFS=$'\x1f' read -r dir repo worktree pr review model effort ctx quota reset week < <(jq -r '[
+IFS=$'\x1f' read -r dir worktree pr review model effort ctx quota reset week < <(jq -r '[
   .workspace.current_dir,
-  (.workspace.repo.name // ""),
   (.workspace.git_worktree // ""),
   (.pr.number // ""),
   (.pr.review_state // ""),
@@ -33,7 +32,10 @@ bar() {
 }
 
 sep=" \033[2m|\033[0m "
-name=${repo:-${dir##*/}}
+origin=$(git -C "$dir" remote get-url origin 2>/dev/null)
+origin=${origin%.git}
+name=${origin##*[/:]}
+name=${name:-${dir##*/}}
 [[ -n $worktree ]] && name+="/$worktree"
 out="\033[1;36m$name\033[0m"
 branch=$(git -C "$dir" --no-optional-locks branch --show-current 2>/dev/null)

@@ -15,9 +15,8 @@ out=$(run '{"workspace":{"current_dir":"/nonexistent/home/proj"},"model":{"displ
 [[ $out == *'00:00'* ]] || fail "reset time missing"
 [[ $out == *$'7d\e[0m \e[32m40%'* ]] || fail "7d quota not green 40%"
 
-out=$(run '{"workspace":{"current_dir":"/nonexistent/home/proj","repo":{"name":"dotfiles"},"git_worktree":"feat"},
+out=$(run '{"workspace":{"current_dir":"/nonexistent/home/proj"},
   "model":{"display_name":"Opus"},"pr":{"number":42,"review_state":"changes_requested"}}')
-[[ $out == *$'\e[1;36mdotfiles/feat\e[0m'* ]] || fail "repo/worktree not shown"
 [[ $out == *$'\e[31m#42'* ]] || fail "PR with changes requested not red"
 
 out=$(run '{"workspace":{"current_dir":"/nonexistent/home/proj"},"model":{"display_name":"Opus"}}')
@@ -26,6 +25,8 @@ out=$(run '{"workspace":{"current_dir":"/nonexistent/home/proj"},"model":{"displ
 repo=$(mktemp -d)
 trap 'rm -rf "$repo"' EXIT
 git -C "$repo" init -q -b main && touch "$repo/a" "$repo/b"
-out=$(run '{"workspace":{"current_dir":"'"$repo"'"},"model":{"display_name":"Opus"}}')
+git -C "$repo" remote add origin git@github-alias:me/dotfiles.git
+out=$(run '{"workspace":{"current_dir":"'"$repo"'","git_worktree":"feat"},"model":{"display_name":"Opus"}}')
+[[ $out == *$'\e[1;36mdotfiles/feat\e[0m'* ]] || fail "origin repo name/worktree not shown"
 [[ $out == *$'\e[33m*2'* ]] || fail "dirty count missing"
 echo ok
