@@ -9,9 +9,9 @@
     cd .dotfiles
     ```
 2. Install Homebrew from https://brew.sh/
-3. Install OhMyZSH
+3. Install fzf-tab
     ```shell
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    git clone --depth=1 https://github.com/Aloxaf/fzf-tab ~/.local/share/fzf-tab
     ```
 4. Install applications: `brew bundle`
 5. Install Iterm2 config Settings > Settings > Import

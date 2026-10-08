@@ -12,12 +12,29 @@ export LC_ALL=             # Reset all locale variables
 export LANG="fr_FR.UTF-8"  # Set FR as default locale
 export LC_MESSAGES="POSIX" # Set POSIX for commands messages
 
-export ZSH="$HOME/.oh-my-zsh"
+HISTFILE=~/.zsh_history
+HISTSIZE=50000
+SAVEHIST=10000
+setopt extended_history hist_expire_dups_first hist_ignore_dups hist_ignore_space hist_verify share_history
+setopt auto_cd auto_pushd pushd_ignore_dups pushd_minus interactive_comments long_list_jobs
+setopt complete_in_word always_to_end no_flow_control
+
+# Flèches haut/bas : historique filtré par le début de la ligne déjà tapée
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+bindkey -e
+bindkey '^[[A' up-line-or-beginning-search '^[OA' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search '^[OB' down-line-or-beginning-search
+bindkey "${terminfo[khome]}" beginning-of-line "${terminfo[kend]}" end-of-line
+bindkey "${terminfo[kdch1]}" delete-char
+
+autoload -Uz compinit && compinit
+zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=*'
 
 source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
+source ~/.local/share/fzf-tab/fzf-tab.plugin.zsh
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-plugins=(git ruby macos fzf-tab)
-source $ZSH/oh-my-zsh.sh
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # fzf-tab : preview du dossier sur `cd <Tab>` (le reste hérite de FZF_DEFAULT_OPTS)
