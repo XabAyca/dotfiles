@@ -19,13 +19,16 @@ return {
       return {
         { provider = "\u{e0b6}", hl = function(self) return { fg = fill(self) } end },
         { provider = icon, hl = function(self) return { fg = "black", bg = fill(self) } end },
-        { hl = { fg = "fg", bg = "gray" }, { provider = " " }, body, { provider = " " } },
+        { hl = { bg = "gray" }, { provider = " " }, body, { provider = " " } },
         { provider = "\u{e0b4} ", hl = { fg = "gray" } },
       }
     end
 
+    local Space = { provider = " " }
+    local Align = { provider = "%=" }
+
     local Mode = pill(function(self) return self.colors[self.mode] or "green" end, "\u{e62b} ", {
-      provider = function(self) return self.letters[self.mode] or self.mode end,
+      provider = function(self) return string.format("%-2s", self.letters[self.mode] or self.mode) end,
       hl = { bold = true },
     })
     Mode.init = function(self) self.mode = vim.fn.mode(1):sub(1, 1) end
@@ -42,11 +45,14 @@ return {
       }
     end
 
+    -- flexible : quand la place manque, heirline replie d'abord la priorité la plus basse
     local Git = pill("orange", "\u{e0a0} ", {
       { provider = function(self) return self.status.head end, hl = { bold = true } },
-      count("added", " +", "green"),
-      count("changed", " ~", "yellow"),
-      count("removed", " -", "red"),
+      {
+        flexible = 1,
+        { count("added", " +", "green"), count("changed", " ~", "yellow"), count("removed", " -", "red") },
+        {},
+      },
     })
     Git.condition = conditions.is_git_repo
     Git.init = function(self) self.status = vim.b.gitsigns_status_dict end
@@ -64,8 +70,21 @@ return {
       return self.status.error + self.status.warning + self.status.info > 0
     end
 
+    local FileName = {
+      init = function(self)
+        local name = vim.fn.expand("%:.")
+        self.name = name == "" and "[No Name]" or name
+      end,
+      {
+        flexible = 2,
+        { provider = function(self) return self.name end },
+        { provider = function(self) return vim.fn.pathshorten(self.name) end },
+        { provider = function(self) return vim.fn.fnamemodify(self.name, ":t") end },
+      },
+    }
+
     local File = pill("pink", "\u{f07b} ", {
-      { provider = function() local name = vim.fn.expand("%:.") return name == "" and "[No Name]" or name end },
+      FileName,
       { condition = function() return vim.bo.modified end, provider = " ●", hl = { fg = "orange" } },
       { condition = function() return vim.bo.readonly or not vim.bo.modifiable end, provider = " \u{f023}", hl = { fg = "red" } },
     })
@@ -99,32 +118,62 @@ return {
 
     local ShowCmd = { provider = "%S ", hl = { fg = "yellow", bold = true } }
 
+    -- utf-8 et unix sont la norme : on ne signale que ce qui s'en écarte
     local FileInfo = pill("yellow", "\u{f121} ", {
       init = function(self)
         self.icon, self.icon_color = devicons.get_icon_color(vim.fn.expand("%:t"), vim.fn.expand("%:e"), { default = true })
+        self.enc = vim.bo.fenc ~= "" and vim.bo.fenc or vim.o.enc
       end,
       { provider = function(self) return self.icon end, hl = function(self) return { fg = self.icon_color } end },
       { provider = function() return " " .. vim.bo.filetype end },
-      { provider = function() return "  " .. (vim.bo.fenc ~= "" and vim.bo.fenc or vim.o.enc) end, hl = { fg = "dim" } },
-      { provider = function() return "  " .. ({ unix = "\u{f17c}", dos = "\u{f17a}", mac = "\u{f179}" })[vim.bo.fileformat] end, hl = { fg = "dim" } },
+      { condition = function(self) return self.enc ~= "utf-8" end, provider = function(self) return "  " .. self.enc end, hl = { fg = "orange" } },
+      {
+        condition = function() return vim.bo.fileformat ~= "unix" end,
+        provider = function() return "  " .. ({ dos = "\u{f17a} dos", mac = "\u{f179} mac" })[vim.bo.fileformat] end,
+        hl = { fg = "orange" },
+      },
     })
 
     local Position = pill("blue", "\u{f01a4} ", { provider = "%4l:%-3c %3P" })
 
+    local special = {
+      help = { "\u{f059} ", function() return "help " .. vim.fn.expand("%:t:r") end },
+      terminal = { "\u{f120} ", function() return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0):match("//%d+:(.*)$") or "term", ":t") end },
+      quickfix = { "\u{f0ca} ", function() return vim.fn.getwininfo(vim.api.nvim_get_current_win())[1].loclist == 1 and "loclist" or "quickfix" end },
+      fugitive = { "\u{e702} ", function() return "Git" end },
+      git = { "\u{e702} ", function() return "Git" end },
+      netrw = { "\u{f07c} ", function() return vim.fn.fnamemodify(vim.b.netrw_curdir or vim.fn.getcwd(), ":~") end },
+    }
+    local function special_pill(color)
+      return pill(color, function(self) return self.special[1] end, { provider = function(self) return self.special[2]() end })
+    end
+
+    local Special = {
+      condition = function(self)
+        self.special = special[vim.bo.filetype] or special[vim.bo.buftype]
+        return self.special ~= nil
+      end,
+      fallthrough = false,
+      { condition = conditions.is_not_active, hl = { fg = "dim" }, Space, special_pill("dim") },
+      { Space, Mode, special_pill("cyan"), Align, Position },
+    }
+
+    -- fenêtres inactives : mêmes pastilles, éteintes, comme les fenêtres tmux non sélectionnées
     local Inactive = {
       condition = conditions.is_not_active,
       hl = { fg = "dim" },
-      { provider = " %f" }, { provider = "%=" }, { provider = "%l:%c " },
+      Space, pill("dim", "\u{f07b} ", FileName), Align, pill("dim", "\u{f01a4} ", { provider = "%4l:%-3c" }),
     }
 
+    -- %< : si la barre déborde malgré les replis, Neovim coupe après le mode plutôt qu'au début
     local Active = {
-      { provider = " " }, Mode, Git, Diagnostics, File,
-      { provider = "%=" },
+      Space, Mode, { provider = "%<" }, Git, Diagnostics, File,
+      Align,
       ShowCmd, SearchCount, Recording, LazyUpdates, FileInfo, Position,
     }
 
     require("heirline").setup({
-      statusline = { hl = { fg = "fg", bg = "bg" }, fallthrough = false, Inactive, Active },
+      statusline = { hl = { fg = "fg", bg = "bg" }, fallthrough = false, Special, Inactive, Active },
       opts = { colors = colors },
     })
   end,
