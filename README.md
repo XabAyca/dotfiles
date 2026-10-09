@@ -11,7 +11,8 @@ Some pieces install themselves on first launch, nothing to do for them:
 
 - Powerlevel10k (server) and fzf-tab: cloned into `~/.local/share` by `.zshrc`.
 - tmux plugins: `.tmux.conf` clones TPM and installs the plugins.
-- nvim plugins: lazy.nvim bootstraps itself.
+- nvim plugins: lazy.nvim bootstraps itself, and nvim-treesitter builds its parsers —
+  that takes the `tree-sitter` CLI and a C compiler.
 
 ## macOS
 
@@ -48,14 +49,14 @@ Some pieces install themselves on first launch, nothing to do for them:
 `home-forge` patches the paths for Linux and configures tmux to survive SSH
 disconnects without leaking the remote clipboard. Verified on Ubuntu 26.04.
 
-Prerequisite: [mise](https://mise.jdx.dev), which manages the runtimes (node, rust,
-claude, …) listed in `~/.config/mise/config.toml`.
+Prerequisite: [mise](https://mise.jdx.dev), which manages the runtimes and tools
+(node, rust, claude, neovim, tree-sitter, …) listed in `~/.config/mise/config.toml`.
 
 1. Packages. `git`, `tmux`, `fzf` and `ripgrep` are often already installed.
 
     ```shell
     sudo apt update
-    sudo apt install -y stow zsh neovim fd-find bat lsd git-delta \
+    sudo apt install -y stow zsh build-essential fd-find bat lsd git-delta \
       zsh-autosuggestions zsh-syntax-highlighting
     sudo locale-gen fr_FR.UTF-8 && sudo update-locale
     ```
