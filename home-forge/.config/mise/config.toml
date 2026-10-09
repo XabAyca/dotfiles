@@ -1,7 +1,9 @@
 [tools]
 claude = "latest"
 gh = "latest"
+neovim = "0.12"
 node = "22"
+tree-sitter = "latest"
 uv = "latest"
 rust = "stable"
 
