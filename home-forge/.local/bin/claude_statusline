@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Claude Code status line: repo/worktree  branch *dirty #PR | model (effort) | Ctx bar % | Use bar %  reset 7d %
+# Claude Code status line, styled like the lean gruvbox p10k prompt in ~/.p10k.zsh:
+# ~/dir on  branch ⇣⇡ *stash ~conflicts +staged !unstaged ?untracked #PR · model (effort) · Ctx bar % · Use bar %  reset 7d %
 # Reads the session JSON on stdin (https://code.claude.com/docs/en/statusline).
-# Colors are ANSI 0-15, so they follow the base16 terminal palette; icons need a Nerd Font.
+# Colors are the 256-color gruvbox indexes ~/.p10k.zsh uses; icons need a Nerd Font.
 
-IFS=$'\x1f' read -r dir worktree pr review model effort ctx quota reset week < <(jq -r '[
+IFS=$'\x1f' read -r dir pr review model effort ctx quota reset week < <(jq -r '[
   .workspace.current_dir,
-  (.workspace.git_worktree // ""),
   (.pr.number // ""),
   (.pr.review_state // ""),
   .model.display_name,
@@ -16,47 +16,85 @@ IFS=$'\x1f' read -r dir worktree pr review model effort ctx quota reset week < <
   (.rate_limits.seven_day.used_percentage // "" | if . == "" then . else floor end)
 ] | map(tostring) | join("\u001f")')
 
+off='\033[0m' bold='\033[1m'
+green='\033[38;5;142m' yellow='\033[38;5;214m' red='\033[38;5;167m'
+aqua='\033[38;5;108m' blue='\033[38;5;109m' grey='\033[38;5;244m'
+
 level() {
-  if (( $1 < 50 )); then printf '32'; elif (( $1 < 80 )); then printf '33'; else printf '31'; fi
+  if (( $1 < 50 )); then printf '%s' "$green"; elif (( $1 < 80 )); then printf '%s' "$yellow"; else printf '%s' "$red"; fi
 }
 
 bar() {
   local filled=$(( $1 / 10 )) color
   color=$(level "$1")
-  printf '\033[%sm' "$color"
+  printf '%s' "$color"
   for (( i = 0; i < 10; i++ )); do
-    (( i == filled )) && printf '\033[2m'
+    (( i == filled )) && printf '\\033[2m'
     if (( i < filled )); then printf '▓'; else printf '░'; fi
   done
-  printf '\033[0m \033[%sm%s%%\033[0m' "$color" "$1"
+  printf '%s %s%s%%%s' "$off" "$color" "$1" "$off"
 }
 
-sep=" \033[2m|\033[0m "
-origin=$(git -C "$dir" remote get-url origin 2>/dev/null)
-origin=${origin%.git}
-name=${origin##*[/:]}
-name=${name:-${dir##*/}}
-[[ -n $worktree ]] && name+="/$worktree"
-out="\033[1;36m$name\033[0m"
-branch=$(git -C "$dir" --no-optional-locks branch --show-current 2>/dev/null)
-if [[ -n $branch ]]; then
-  out+=" \033[1;35m\uE725 $branch\033[0m"
-  dirty=$(git -C "$dir" --no-optional-locks status --porcelain 2>/dev/null | wc -l)
-  (( dirty > 0 )) && out+=" \033[33m*$dirty\033[0m"
+# Like p10k's dir anchors: first and last segments and repo roots in bold aqua.
+if [[ $dir == "$HOME" || $dir == "$HOME"/* ]]; then
+  walk=$HOME segs=("~") rest=${dir#"$HOME"}
+else
+  walk="" segs=("") rest=$dir
+fi
+IFS=/ read -ra more <<< "${rest#/}"
+segs+=("${more[@]}")
+last=$(( ${#segs[@]} - 1 ))
+out=""
+for i in "${!segs[@]}"; do
+  (( i > 0 )) && { walk+="/${segs[i]}"; out+="$blue/"; }
+  if (( i == 0 || i == last )) || [[ -e $walk/.git ]]; then
+    out+="$bold$aqua${segs[i]}$off"
+  else
+    out+="$blue${segs[i]}$off"
+  fi
+done
+
+staged=0 unstaged=0 untracked=0 conflicted=0 stash=0 ahead=0 behind=0 head="" oid=""
+while read -r kind key a b _; do
+  case $kind in
+    '#') case $key in
+           branch.oid) oid=$a ;;
+           branch.head) head=$a ;;
+           branch.ab) ahead=${a#+} behind=${b#-} ;;
+           stash) stash=$a ;;
+         esac ;;
+    1|2) [[ ${key:0:1} != . ]] && (( ++staged )); [[ ${key:1:1} != . ]] && (( ++unstaged )) ;;
+    u) (( ++conflicted )) ;;
+    '?') (( ++untracked )) ;;
+  esac
+done < <(git -C "$dir" --no-optional-locks status --porcelain=v2 --branch --show-stash 2>/dev/null)
+if [[ -n $oid ]]; then
+  out+=" on $green "
+  if [[ $head == "(detached)" ]]; then out+="$off@$green${oid:0:8}"; else out+="$head"; fi
+  (( behind )) && out+=" ⇣$behind"
+  (( ahead )) && { (( behind )) || out+=" "; out+="⇡$ahead"; }
+  (( stash )) && out+=" *$stash"
+  (( conflicted )) && out+=" $red~$conflicted"
+  (( staged )) && out+=" $yellow+$staged"
+  (( unstaged )) && out+=" $yellow!$unstaged"
+  (( untracked )) && out+=" $aqua?$untracked"
+  out+=$off
 fi
 if [[ -n $pr ]]; then
   case $review in
-    approved) color=32 ;; changes_requested) color=31 ;; draft) color=2 ;; *) color=0 ;;
+    approved) color=$green ;; changes_requested) color=$red ;; draft) color=$grey ;; *) color=$off ;;
   esac
-  out+=" \033[${color}m#$pr\033[0m"
+  out+=" $color#$pr$off"
 fi
+
+sep=" $grey·$off "
 out+="$sep$model"
-[[ -n $effort ]] && out+=" \033[33m($effort)\033[0m"
+[[ -n $effort ]] && out+=" $yellow($effort)$off"
 [[ -n $ctx ]] && out+="${sep}Ctx $(bar "$ctx")"
 if [[ -n $quota ]]; then
   time=$(date -d "@$reset" +%H:%M 2>/dev/null)
   out+="${sep}Use $(bar "$quota")"
-  [[ -n $time ]] && out+=" \033[2m\uF017 $time\033[0m"
+  [[ -n $time ]] && out+=" $grey $time$off"
 fi
-[[ -n $week ]] && out+=" \033[2m7d\033[0m \033[$(level "$week")m${week}%\033[0m"
+[[ -n $week ]] && out+=" ${grey}7d$off $(level "$week")${week}%$off"
 printf '%b\n' "$out"
