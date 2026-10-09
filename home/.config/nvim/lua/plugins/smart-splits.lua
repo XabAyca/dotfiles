@@ -1,11 +1,12 @@
 return {
   "mrjones2014/smart-splits.nvim",
   lazy = false,
-  init = function()
-    if vim.env.TMUX then
-      vim.g.smart_splits_multiplexer_integration = "tmux"
-    end
-  end,
+  dependencies = {
+    { "smart-splits-nvim/backend-tmux", main = "smart-splits-backend-tmux" },
+  },
+  opts = {
+    mux = { backend = "smart-splits-backend-tmux" },
+  },
   keys = {
     -- Navigation nvim splits <-> tmux panes
     { "<C-h>", function() require("smart-splits").move_cursor_left() end,  mode = { "n", "t" }, desc = "Navigate left (nvim/tmux)" },

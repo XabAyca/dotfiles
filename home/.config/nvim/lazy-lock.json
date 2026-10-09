@@ -1,5 +1,6 @@
 {
   "ale": { "branch": "master", "commit": "e1789bc54483d76ac9ddb40b633d1645c8281914" },
+  "backend-tmux": { "branch": "master", "commit": "9e9e6aa9b3eb7a8d3896a993611622ac97abff52" },
   "flatten.nvim": { "branch": "main", "commit": "d92ca41e9c330f45c1b854a80c89c8488a9d730c" },
   "fzf-lua": { "branch": "main", "commit": "02bc882f208f3481aa959dbbee8ce5edad2fd8b2" },
   "gitsigns.nvim": { "branch": "main", "commit": "8d79f2410c76e62b92e51c28c82e28c1c5a3daeb" },
@@ -11,7 +12,7 @@
   "nvim-treesitter": { "branch": "master", "commit": "cf12346a3414fa1b06af75c79faebe7f76df080a" },
   "nvim-web-devicons": { "branch": "master", "commit": "914decffe650296c87312c53b7933ecb86718499" },
   "plenary.nvim": { "branch": "master", "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b" },
-  "smart-splits.nvim": { "branch": "master", "commit": "ec76708f1617ef9e2ac353357fe52d2c997a0f06" },
+  "smart-splits.nvim": { "branch": "master", "commit": "ef21f373203dcf553fd4bc05cd74f3e14505400a" },
   "vim-fugitive": { "branch": "master", "commit": "3b753cf8c6a4dcde6edee8827d464ba9b8c4a6f0" },
   "vim-table-mode": { "branch": "master", "commit": "bb025308a45c67c7c8f0763ba37bc2ee3f534df0" }
 }
