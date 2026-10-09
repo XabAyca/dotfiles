@@ -52,9 +52,9 @@ brew 'zsh-syntax-highlighting'
 
 # Casks
 cask 'adobe-acrobat-reader'
-cask 'arc'
 cask 'bruno'
 cask 'cyberduck'
+cask 'firefox'
 cask 'font-hack-nerd-font'
 cask 'garmin-express'
 cask 'iterm2'
