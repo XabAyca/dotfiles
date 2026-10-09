@@ -29,11 +29,13 @@ return {
         "markdown",
         "markdown_inline",
         "python",
+        "query",
         "regex",
         "ruby",
         "sql",
         "typescript",
         "vim",
+        "vimdoc",
         "yaml",
       },
       -- lorse de l'appui sur <Ctrl-space> sélectionne le bloc
