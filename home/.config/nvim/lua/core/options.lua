@@ -23,6 +23,11 @@ opt.termguicolors = true
 opt.background = "dark" -- dark ou light en fonction de votre préférence
 opt.signcolumn = "auto:2" -- affiche jusqu'à 2 signes côte à côte dans la colonne de gauche
 
+-- ce que la ligne de commande affichait passe dans la statusline (heirline)
+opt.showmode = false -- le mode y est déjà
+opt.showcmdloc = "statusline" -- touches en attente et taille de la sélection visuelle
+opt.shortmess:append("Sq") -- le compteur de recherche [3/12] et "recording @a"
+
 -- presse papier
 opt.clipboard = "unnamedplus" -- on utilise le presse papier du système par défaut
 
