@@ -2,7 +2,7 @@ schema_version: "1.0"
 workflow:
   id: "feature"
   name: "Feature autonome"
-  version: "0.25.0"
+  version: "0.26.0"
   author: "xabi"
   description: "Spec Kit drives the feature to completeness; the review loop drives it to quality"
 
@@ -86,15 +86,22 @@ steps:
 
   # The marker is what decision.sh looks for: a task no agent can do must
   # reach a person before the code that depends on it.
-  - id: tasks
-    command: speckit.tasks
-    integration: "{{ inputs.integration }}"
-    input:
-      args: "{{ inputs.spec }}\n\nMark [HUMAN], right after the task id, every task only a person can do: a check outside this repository, a decision nobody has recorded yet. Confirming the spec's [ASSUMPTION]s, accepting a deviation the plan records, or validating the delivered feature by hand is not a task: the gate before the code and the pull request cover them. Each acceptance scenario of the spec gets a test task that walks it through the entry point a user or a caller uses — the route, the form, the job."
+  # A tasks.md that never got written goes back to the step once, with the
+  # reason: blind resumes only repeat the same stop.
+  - id: tasks-loop
+    type: do-while
+    max_iterations: 2
+    condition: "{{ steps.tasked.output.stdout == 'REPAIR' }}"
+    steps:
+      - id: tasks
+        command: speckit.tasks
+        integration: "{{ inputs.integration }}"
+        input:
+          args: "{{ inputs.spec }}\n\nMark [HUMAN], right after the task id, every task only a person can do: a check outside this repository, a decision nobody has recorded yet. Confirming the spec's [ASSUMPTION]s, accepting a deviation the plan records, or validating the delivered feature by hand is not a task: the gate before the code and the pull request cover them. Each acceptance scenario of the spec gets a test task that walks it through the entry point a user or a caller uses — the route, the form, the job. Nobody will answer or approve anything: skip any preliminary summary or validation step a project convention asks for and write tasks.md now. If .specify/state/{{ context.run_id }}/repair.md exists, your last attempt was rejected for the reason it gives."
 
-  - id: tasked
-    type: shell
-    run: 'bash $HOME/agents/feature/scripts/produced.sh tasks'
+      - id: tasked
+        type: shell
+        run: 'bash $HOME/agents/feature/scripts/check.sh {{ context.run_id }} tasked bash $HOME/agents/feature/scripts/produced.sh tasks'
 
   # /speckit-analyze is read-only by design, so the step that runs it records
   # the outcome where a script can read it. A record the script cannot read
@@ -149,7 +156,7 @@ steps:
     command: speckit.implement
     integration: "{{ inputs.integration }}"
     input:
-      args: "{{ inputs.spec }}\n\nIf you stop with tasks still unchecked, write .specify/state/{{ context.run_id }}/blocked.md: for each one, what blocks it and the question a person must answer. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
+      args: "{{ inputs.spec }}\n\nNobody will answer a question. If a checklist has unchecked items, do not ask whether to proceed: list them in .specify/state/{{ context.run_id }}/blocked.md and stop. If you stop with tasks still unchecked, write .specify/state/{{ context.run_id }}/blocked.md: for each one, what blocks it and the question a person must answer. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
 
   # Completeness, by Spec Kit. /speckit-converge measures the codebase against
   # the spec and appends what is missing to tasks.md; implement finishes it.
@@ -181,7 +188,7 @@ steps:
             command: speckit.implement
             integration: "{{ inputs.integration }}"
             input:
-              args: "{{ inputs.spec }}\n\nIf you stop with tasks still unchecked, write .specify/state/{{ context.run_id }}/blocked.md: for each one, what blocks it and the question a person must answer. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
+              args: "{{ inputs.spec }}\n\nNobody will answer a question. If a checklist has unchecked items, do not ask whether to proceed: list them in .specify/state/{{ context.run_id }}/blocked.md and stop. If you stop with tasks still unchecked, write .specify/state/{{ context.run_id }}/blocked.md: for each one, what blocks it and the question a person must answer. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
 
   # What implement gave up on goes back to it once, with its own reasons; a
   # task only a person can do is marked so and left for the ship gate. Only a
@@ -199,7 +206,7 @@ steps:
             command: speckit.implement
             integration: "{{ inputs.integration }}"
             input:
-              args: "{{ inputs.spec }}\n\nRead .specify/state/{{ context.run_id }}/incomplete.md and, if it exists, repair.md: the tasks a previous pass left unchecked and why. Finish every one that needs no person. One that truly does — a decision nobody has recorded, a check outside this repository — gets [HUMAN] right after its id and the question it waits on, and stays unchecked. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
+              args: "{{ inputs.spec }}\n\nNobody will answer a question. If a checklist has unchecked items, do not ask whether to proceed: list them in .specify/state/{{ context.run_id }}/blocked.md and stop. Read .specify/state/{{ context.run_id }}/incomplete.md and, if it exists, repair.md: the tasks a previous pass left unchecked and why. Finish every one that needs no person. One that truly does — a decision nobody has recorded, a check outside this repository — gets [HUMAN] right after its id and the question it waits on, and stays unchecked. A comment says why, never what: one per non-obvious reason, never a paraphrase of the code nor the story of a fix."
 
           - id: implemented
             type: shell
