@@ -19,21 +19,23 @@ USAGE
 }
 
 # The commits a person added to the pull request after the one the run
-# pushed, and whether it was merged. Null when GitHub cannot say: a PR that
-# could not be read is not a PR nobody had to fix.
+# pushed, their subjects, and whether it was merged. Null when GitHub cannot
+# say: a PR that could not be read is not a PR nobody had to fix.
 pr_outcome() {
   local url=$1 sha=$2 json
   json=$(gh pr view "$url" --json commits,state 2>/dev/null) || { echo null; return 0; }
   jq --arg sha "$sha" '
     ([.commits[].oid] | index($sha)) as $i
-    | {state, fixed_after: (if $i == null then null else (.commits | length) - $i - 1 end)}' <<< "$json"
+    | {state,
+       fixed_after: (if $i == null then null else (.commits | length) - $i - 1 end),
+       added_after: (if $i == null then null else [.commits[$i + 1:][].messageHeadline] end)}' <<< "$json"
 }
 
 PROMPT='You are reviewing the last runs of the autonomous feature workflow. Their
 records are the JSON array on stdin: cost, steps, repairs (a check that sent a
 step back once, with its reason), gates and answers, review verdicts, failure
 reason, and for a shipped run the pull request with the commits a person added
-after it (pr.fixed_after). The workflow and its scripts are in
+after it (pr.fixed_after, their subjects in pr.added_after). The workflow and its scripts are in
 home-forge/agents/feature, the skills in home-forge/.claude/skills: read them
 before proposing anything.
 

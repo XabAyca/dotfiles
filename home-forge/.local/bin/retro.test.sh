@@ -12,7 +12,7 @@ mkdir -p "$T/bin" "$T/records" "$T/dotfiles"
 cat > "$T/bin/gh" <<'STUB'
 #!/usr/bin/env bash
 case "$*" in
-  *pull/7*) echo '{"state":"MERGED","commits":[{"oid":"a"},{"oid":"b"},{"oid":"c"},{"oid":"d"}]}' ;;
+  *pull/7*) echo '{"state":"MERGED","commits":[{"oid":"a"},{"oid":"b"},{"oid":"c","messageHeadline":":bug: fix c"},{"oid":"d","messageHeadline":":lipstick: fix d"}]}' ;;
   *) exit 1 ;;
 esac
 STUB
@@ -43,6 +43,8 @@ grep -qx '# Bilan' "$out" 2>/dev/null || say "the model's answer is not in the r
 jq -e 'map(.run_id) | index("old") == null' "$SENT" >/dev/null || say "an older run was sent past the limit"
 [ "$(jq -r '.[] | select(.run_id == "fixed") | .pr.fixed_after' "$SENT")" = 2 ] \
   || say "the commits added after the run were not counted"
+[ "$(jq -c '.[] | select(.run_id == "fixed") | .pr.added_after' "$SENT")" = '[":bug: fix c",":lipstick: fix d"]' ] \
+  || say "the subjects of the commits added after the run were not kept"
 [ "$(jq -r '.[] | select(.run_id == "fixed") | .pr.state' "$SENT")" = MERGED ] \
   || say "the PR state was not kept"
 [ "$(jq -r '.[] | select(.run_id == "gone") | .pr' "$SENT")" = null ] \
