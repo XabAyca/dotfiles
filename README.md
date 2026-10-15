@@ -16,7 +16,8 @@ Some pieces install themselves on first launch, nothing to do for them:
 
 ## macOS
 
-1. Install Homebrew from https://brew.sh/
+1. Install Homebrew from [brew.sh](https://brew.sh/)
+
 2. Clone this repository:
 
     ```shell
@@ -25,6 +26,7 @@ Some pieces install themselves on first launch, nothing to do for them:
     ```
 
 3. Install the CLI tools, apps and fonts: `brew bundle`
+
 4. Link the dotfiles. A `~/.zshrc` or `~/.gitconfig` already in place would block stow:
 
     ```shell
@@ -42,6 +44,7 @@ Some pieces install themselves on first launch, nothing to do for them:
     ```
 
 6. iTerm2: Settings > Settings > Import, and pick `iTerm2_State.itermexport`.
+
 7. macOS settings: `source install-macos-settings.sh`
 
 ## Ubuntu server (headless, SSH)
@@ -62,10 +65,10 @@ Prerequisite: [mise](https://mise.jdx.dev), which manages the runtimes and tools
     ```
 
 2. Font, on the machine you connect **from**: install
-   [MesloLGS NF](https://github.com/romkatv/powerlevel10k#manual-font-installation)
-   and select it in the terminal. Glyphs are drawn by the client, so nothing installed
-   on the server can fix missing ones. `.p10k.zsh` runs in `nerdfont-complete` mode —
-   a Nerd Fonts v3 face renders shifted glyphs rather than none.
+    [MesloLGS NF](https://github.com/romkatv/powerlevel10k#manual-font-installation)
+    and select it in the terminal. Glyphs are drawn by the client, so nothing installed
+    on the server can fix missing ones. `.p10k.zsh` runs in `nerdfont-complete` mode —
+    a Nerd Fonts v3 face renders shifted glyphs rather than none.
 
 3. Link the dotfiles. A `~/.zshrc` or `~/.gitconfig` already in place would block stow:
 
@@ -93,11 +96,18 @@ Prerequisite: [mise](https://mise.jdx.dev), which manages the runtimes and tools
 4. Install the runtimes: `mise install`
 
 5. Test before switching shells. Keep **two** SSH sessions open and, in one of them,
-   run `zsh -l` — a child process you leave with `exit`, never `source ~/.zshrc`,
-   which asks bash to read zsh. Check the p10k prompt and its glyphs, `node -v`,
-   `cargo -V` and `which claude` (the mise test), `git diff` rendered by delta,
-   `git log` with its gitmoji, `Ctrl-T` / `Ctrl-R` / `Alt-C`, `cd <Tab>`, `ll`, `nvim`,
-   and `C-hjkl` across tmux panes and nvim splits.
+    run `zsh -l` — a child process you leave with `exit`, never `source ~/.zshrc`,
+    which asks bash to read zsh. Check:
+
+    - the p10k prompt and its glyphs
+    - `node -v`, `cargo -V` and `which claude` (the mise test)
+    - `git diff` rendered by delta
+    - `git log` with its gitmoji
+    - `Ctrl-T` / `Ctrl-R` / `Alt-C`
+    - `cd <Tab>`
+    - `ll`
+    - `nvim`
+    - `C-hjkl` across tmux panes and nvim splits
 
 6. Only once that is reliable, several sessions in a row:
 
