@@ -13,6 +13,7 @@ local languages = {
   "query",
   "regex",
   "ruby",
+  "rust",
   "sql",
   "typescript",
   "vim",
