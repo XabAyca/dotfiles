@@ -7,9 +7,23 @@ return {
     local fzf = require("fzf-lua")
 
     fzf.setup({
-      "ivy", -- barre ancrée en bas de l'écran
-      winopts = { height = 0.5, toggle_behavior = "default", preview = { hidden = true } }, -- moitié basse, sans preview
-      fzf_opts = { ["--layout"] = "default" }, -- prompt en bas, résultats au-dessus
+      -- Couleurs reprises du thème de Neovim
+      fzf_colors = true,
+      -- Plein écran, sans bordure ni preview : comme un buffer normal
+      winopts = {
+        fullscreen = true,
+        border = "none",
+        preview = { hidden = true },
+      },
+      -- Prompt en haut, résultats en dessous, compteur discret à droite
+      fzf_opts = {
+        ["--layout"] = "reverse",
+        ["--info"] = "inline-right",
+      },
+      defaults = {
+        header = false, -- pas de ligne d'aide au-dessus des résultats
+        formatter = "path.filename_first", -- nom du fichier d'abord, dossier ensuite
+      },
       files = {
         fd_opts = "--type f --hidden --exclude .git",
       },
