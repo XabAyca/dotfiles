@@ -1,0 +1,39 @@
+theme = Gruvbox Dark
+
+macos-option-as-alt = right
+
+keybind = alt+left=esc:b
+keybind = alt+right=esc:f
+keybind = alt+backspace=text:\x1b\x7f
+keybind = super+left=text:\x01
+keybind = super+right=text:\x05
+keybind = super+backspace=text:\x15
+
+# Redimensionnement tmux/nvim (M-hjkl) sur Option, comme iTerm
+keybind = alt+h=esc:h
+keybind = alt+j=esc:j
+keybind = alt+k=esc:k
+keybind = alt+l=esc:l
+# Sinon tmux lit Cmd+j/k/l comme M-j/k/l
+keybind = super+j=ignore
+keybind = super+k=ignore
+keybind = super+l=ignore
+
+# Le serveur ne connaît pas xterm-ghostty
+shell-integration-features = ssh-terminfo,ssh-env
+
+# Quick terminal accessible depuis n'importe quelle app
+keybind = global:ctrl+space=toggle_quick_terminal
+quick-terminal-position = top
+quick-terminal-autohide = true
+
+# tmux gère déjà onglets et splits : interface épurée
+macos-titlebar-style = hidden
+window-padding-x = 8
+window-padding-y = 6
+window-padding-balance = true
+
+# Confort
+mouse-hide-while-typing = true
+copy-on-select = clipboard
+confirm-close-surface = false

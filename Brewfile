@@ -57,7 +57,7 @@ cask 'cyberduck'
 cask 'firefox'
 cask 'font-hack-nerd-font'
 cask 'garmin-express'
-cask 'iterm2'
+cask 'ghostty'
 cask 'maccy'
 cask 'xabayca/plan/plan', trusted: true
 cask 'rectangle'
