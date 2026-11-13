@@ -36,6 +36,7 @@ Some pieces install themselves on first launch, nothing to do for them:
 
     ```shell
     rbenv install <version> && rbenv global <version>
+    gem install tmuxinator
     pyenv install <version> && pyenv global <version>
     nodenv install <version> && nodenv global <version>
     rustup default stable
