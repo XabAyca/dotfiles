@@ -5,11 +5,12 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Language (Execute `locale` to see the result)
-# ------------------------------------------------------------------------------
-export LC_ALL=             # Reset all locale variables
-export LANG="fr_FR.UTF-8"  # Set FR as default locale
-export LC_MESSAGES="POSIX" # Set POSIX for commands messages
+# Locale française, mais messages des commandes en anglais (cherchables)
+unset LC_ALL
+export LANG="fr_FR.UTF-8"
+export LC_MESSAGES="POSIX"
+
+export EDITOR="nvim"
 
 HISTFILE=~/.zsh_history
 HISTSIZE=50000
@@ -28,31 +29,26 @@ bindkey '^[[B' down-line-or-beginning-search '^[OB' down-line-or-beginning-searc
 bindkey "${terminfo[khome]}" beginning-of-line "${terminfo[kend]}" end-of-line
 bindkey "${terminfo[kdch1]}" delete-char
 
+# -U : un shell lancé dans tmux hérite du PATH, sans dédoublonnage il s'allonge
+typeset -U path
+path=(~/.cargo/bin ~/.local/bin $path)
+
+# Sans cette activation, les binaires installés par mise (node, claude…) sont hors du PATH
+eval "$(mise activate zsh)"
+
 autoload -Uz compinit && compinit
 zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=*'
 
 [[ -d ~/.local/share/p10k ]] || git clone -q --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.local/share/p10k
-[[ -d ~/.local/share/fzf-tab ]] || git clone -q --depth=1 https://github.com/Aloxaf/fzf-tab ~/.local/share/fzf-tab
 source ~/.local/share/p10k/powerlevel10k.zsh-theme
-source ~/.local/share/fzf-tab/fzf-tab.plugin.zsh
-source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
-# fzf-tab : preview du dossier sur `cd <Tab>` (le reste hérite de FZF_DEFAULT_OPTS)
-zstyle ':fzf-tab:complete:cd:*' fzf-preview 'lsd -1 --color=always $realpath'
-
-export EDITOR='nvim'
-
-ZLE_RPROMPT_INDENT=0
-
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+ZLE_RPROMPT_INDENT=0
 
-export PATH="$HOME/.local/bin:$PATH"
-
-# mise : gestionnaire de runtimes du serveur. Indispensable, les binaires installes
-# par mise (node, claude, ...) ne sont pas dans le PATH sans cette activation.
-eval "$(mise activate zsh)"
+[[ -d ~/.local/share/fzf-tab ]] || git clone -q --depth=1 https://github.com/Aloxaf/fzf-tab ~/.local/share/fzf-tab
+source ~/.local/share/fzf-tab/fzf-tab.plugin.zsh
+# fzf-tab : preview du dossier sur `cd <Tab>` (le reste hérite de FZF_DEFAULT_OPTS)
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'lsd -1 --color=always $realpath'
 
 # FZF : intégration officielle (keybindings Ctrl-T/Ctrl-R/Alt-C + completion)
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
@@ -63,6 +59,9 @@ export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-ran
 eval "$(fzf --zsh)"
 
 alias ll="lsd --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
-alias ll2="lsd --tree --depth 2 --git --ignore-glob='*DS_Store*' -l --group-directories-first --truncate-owner-after 0"
+alias ll2="ll --tree --depth 2"
 alias t="tmux new-session -A -s"
-[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
+# Sa doc demande que zsh-syntax-highlighting soit sourcé en dernier
+source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
