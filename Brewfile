@@ -11,11 +11,13 @@ brew "fd"
 brew "fzf"
 brew "git"
 brew "gh"
+brew "gmp"
 brew "imagemagick"
 brew "mailcatcher", restart_service: true
 brew "mas"
 brew "ncdu"
 brew "neovim"
+brew "netbirdio/tap/netbird", trusted: true
 brew "nodenv"
 brew "lsd"
 brew "openssl"
@@ -49,7 +51,6 @@ cask "xabayca/plan/plan", trusted: true
 cask "rectangle"
 cask "slack"
 cask "stats"
-cask "tailscale-app"
 
 # Mac App Store
 mas "Keynote", id: 409183694
