@@ -52,8 +52,7 @@ ZLE_RPROMPT_INDENT=0
 # Lazy-load des version managers : on garde les shims en PATH pour que ruby/python/node
 # fonctionnent immédiatement, et on retarde le coûteux `init -` à la première invocation
 # explicite de rbenv/pyenv/nodenv (économise 30-150ms par démarrage de shell).
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.rbenv/shims:$HOME/.pyenv/shims:$HOME/.nodenv/shims:$PATH"
 
 _lazy_rbenv()  { unset -f _lazy_rbenv rbenv;   eval "$(command rbenv init -)";  rbenv "$@" }
