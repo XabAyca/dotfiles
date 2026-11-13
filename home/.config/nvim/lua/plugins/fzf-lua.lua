@@ -22,7 +22,8 @@ return {
       },
       defaults = {
         header = false, -- pas de ligne d'aide au-dessus des résultats
-        formatter = "path.filename_first", -- nom du fichier d'abord, dossier ensuite
+        -- v2 : affiche le nom d'abord mais cherche sur le chemin complet
+        formatter = { "path.filename_first", 2 },
       },
       files = {
         fd_opts = "--type f --hidden --exclude .git",
