@@ -1,17 +1,6 @@
-[filter "lfs"]
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
-	required = true
 [user]
 	name = Xabi
 	email = xabi.aycaguer@gmail.com
-[color]
-	branch = auto
-	diff = auto
-	interactive = auto
-	status = auto
-	ui = true
 [core]
 	editor = nvim
 	excludesfile = ~/.gitignore_global
@@ -56,7 +45,5 @@
 	old = red bold
 	new = green bold
 	whitespace = red reverse
-[add "interactive"]
-	useBuiltin = false
 [interactive]
 	diffFilter = diff-so-fancy --patch
