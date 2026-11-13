@@ -61,7 +61,8 @@ Prerequisite: [mise](https://mise.jdx.dev), which manages the runtimes and tools
     sudo locale-gen fr_FR.UTF-8 && sudo update-locale
     ```
 
-2. Font, on the machine you connect **from**: install
+2. Font, on the machine you connect **from**: the terminal must draw Nerd Font glyphs.
+   Ghostty embeds them, so any font works there; elsewhere install
    [MesloLGS NF](https://github.com/romkatv/powerlevel10k#manual-font-installation)
    and select it in the terminal. Glyphs are drawn by the client, so nothing installed
    on the server can fix missing ones. `.p10k.zsh` runs in `nerdfont-complete` mode —
