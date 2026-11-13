@@ -51,9 +51,6 @@ vim.g.netrw_altfile = 1
 opt.list = true
 opt.listchars:append({ space = "•", nbsp = "␣", trail = "•", precedes = "«", extends = "»", tab = "> " })
 
--- change la police
-opt.guifont = "MesloLGS NF Regular"
-
 -- Ajouter une dernière ligne à la fin des fichiers
 opt.eol = true -- Ajouter une nouvelle ligne à la fin des fichiers si elle n'existe pas
 opt.fixeol = true -- Forcer la présence d'un caractère de fin de ligne sur la dernière ligne
