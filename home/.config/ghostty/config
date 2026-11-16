@@ -29,7 +29,6 @@ quick-terminal-position = top
 quick-terminal-autohide = true
 
 # tmux gère déjà onglets et splits : interface épurée
-macos-titlebar-style = hidden
 window-padding-x = 8
 window-padding-y = 6
 window-padding-balance = true
