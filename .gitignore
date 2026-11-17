@@ -8,8 +8,6 @@ Gemfile.lock
 
 # systemd records "enabled" as an absolute symlink: machine state, not
 # configuration. Enable with:
-#   systemctl --user enable --now agent-gateway.timer
+#   systemctl --user enable --now <unit>
 home-forge/.config/systemd/user/*.wants/
 
-# names a Slack conversation: machine configuration, not dotfiles
-home-forge/agents/gateway/config.env
